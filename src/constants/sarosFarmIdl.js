@@ -8,37 +8,37 @@ export const SarosFarmIdl = {
         {
           name: 'root',
           isMut: true,
-          isSigner: true
+          isSigner: true,
         },
         {
           name: 'pool',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'systemProgram',
           isMut: false,
-          isSigner: false
-        }
+          isSigner: false,
+        },
       ],
       args: [
         {
           name: 'poolPath',
-          type: 'bytes'
+          type: 'bytes',
         },
         {
           name: 'poolNonce',
-          type: 'u8'
+          type: 'u8',
         },
         {
           name: 'poolAuthorityNonce',
-          type: 'u8'
+          type: 'u8',
         },
         {
           name: 'stakingTokenMint',
-          type: 'publicKey'
-        }
-      ]
+          type: 'publicKey',
+        },
+      ],
     },
     {
       name: 'createPoolReward',
@@ -46,65 +46,65 @@ export const SarosFarmIdl = {
         {
           name: 'root',
           isMut: true,
-          isSigner: true
+          isSigner: true,
         },
         {
           name: 'pool',
           isMut: false,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'poolReward',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'rootRewardTokenAccount',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'poolRewardTokenAccount',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'tokenProgram',
           isMut: false,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'systemProgram',
           isMut: false,
-          isSigner: false
-        }
+          isSigner: false,
+        },
       ],
       args: [
         {
           name: 'poolRewardNonce',
-          type: 'u8'
+          type: 'u8',
         },
         {
           name: 'poolRewardAuthorityNonce',
-          type: 'u8'
+          type: 'u8',
         },
         {
           name: 'rewardTokenMint',
-          type: 'publicKey'
+          type: 'publicKey',
         },
         {
           name: 'rewardPerBlock',
-          type: 'u128'
+          type: 'u128',
         },
         {
           name: 'rewardStartBlock',
-          type: 'u64'
+          type: 'u64',
         },
         {
           name: 'rewardEndBlock',
-          type: 'u64'
-        }
-      ]
+          type: 'u64',
+        },
+      ],
     },
     {
       name: 'setPausePool',
@@ -112,20 +112,20 @@ export const SarosFarmIdl = {
         {
           name: 'root',
           isMut: true,
-          isSigner: true
+          isSigner: true,
         },
         {
           name: 'pool',
           isMut: true,
-          isSigner: false
-        }
+          isSigner: false,
+        },
       ],
       args: [
         {
           name: 'isPause',
-          type: 'bool'
-        }
-      ]
+          type: 'bool',
+        },
+      ],
     },
     {
       name: 'setPauseRewardPool',
@@ -133,20 +133,20 @@ export const SarosFarmIdl = {
         {
           name: 'root',
           isMut: true,
-          isSigner: true
+          isSigner: true,
         },
         {
           name: 'poolReward',
           isMut: true,
-          isSigner: false
-        }
+          isSigner: false,
+        },
       ],
       args: [
         {
           name: 'isPause',
-          type: 'bool'
-        }
-      ]
+          type: 'bool',
+        },
+      ],
     },
     {
       name: 'createUserPool',
@@ -154,30 +154,30 @@ export const SarosFarmIdl = {
         {
           name: 'user',
           isMut: true,
-          isSigner: true
+          isSigner: true,
         },
         {
           name: 'pool',
           isMut: false,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'userPool',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'systemProgram',
           isMut: false,
-          isSigner: false
-        }
+          isSigner: false,
+        },
       ],
       args: [
         {
           name: 'userPoolNonce',
-          type: 'u8'
-        }
-      ]
+          type: 'u8',
+        },
+      ],
     },
     {
       name: 'createUserPoolReward',
@@ -185,30 +185,30 @@ export const SarosFarmIdl = {
         {
           name: 'user',
           isMut: true,
-          isSigner: true
+          isSigner: true,
         },
         {
           name: 'poolReward',
           isMut: false,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'userPoolReward',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'systemProgram',
           isMut: false,
-          isSigner: false
-        }
+          isSigner: false,
+        },
       ],
       args: [
         {
           name: 'userPoolRewardNonce',
-          type: 'u8'
-        }
-      ]
+          type: 'u8',
+        },
+      ],
     },
     {
       name: 'stakePool',
@@ -216,40 +216,40 @@ export const SarosFarmIdl = {
         {
           name: 'pool',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'poolStakingTokenAccount',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'user',
           isMut: false,
-          isSigner: true
+          isSigner: true,
         },
         {
           name: 'userPool',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'userStakingTokenAccount',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'tokenProgram',
           isMut: false,
-          isSigner: false
-        }
+          isSigner: false,
+        },
       ],
       args: [
         {
           name: 'amount',
-          type: 'u64'
-        }
-      ]
+          type: 'u64',
+        },
+      ],
     },
     {
       name: 'stakePoolReward',
@@ -257,30 +257,30 @@ export const SarosFarmIdl = {
         {
           name: 'pool',
           isMut: false,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'poolReward',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'user',
           isMut: false,
-          isSigner: true
+          isSigner: true,
         },
         {
           name: 'userPool',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'userPoolReward',
           isMut: true,
-          isSigner: false
-        }
+          isSigner: false,
+        },
       ],
-      args: []
+      args: [],
     },
     {
       name: 'unstakePoolReward',
@@ -288,30 +288,30 @@ export const SarosFarmIdl = {
         {
           name: 'pool',
           isMut: false,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'poolReward',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'user',
           isMut: false,
-          isSigner: true
+          isSigner: true,
         },
         {
           name: 'userPool',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'userPoolReward',
           isMut: true,
-          isSigner: false
-        }
+          isSigner: false,
+        },
       ],
-      args: []
+      args: [],
     },
     {
       name: 'claimReward',
@@ -319,40 +319,40 @@ export const SarosFarmIdl = {
         {
           name: 'poolReward',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'poolRewardAuthority',
           isMut: false,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'poolRewardTokenAccount',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'user',
           isMut: false,
-          isSigner: true
+          isSigner: true,
         },
         {
           name: 'userPoolReward',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'userRewardTokenAccount',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'tokenProgram',
           isMut: false,
-          isSigner: false
-        }
+          isSigner: false,
+        },
       ],
-      args: []
+      args: [],
     },
     {
       name: 'unstakePool',
@@ -360,45 +360,45 @@ export const SarosFarmIdl = {
         {
           name: 'pool',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'poolAuthority',
           isMut: false,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'poolStakingTokenAccount',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'user',
           isMut: false,
-          isSigner: true
+          isSigner: true,
         },
         {
           name: 'userPool',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'userStakingTokenAccount',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'tokenProgram',
           isMut: false,
-          isSigner: false
-        }
+          isSigner: false,
+        },
       ],
       args: [
         {
           name: 'amount',
-          type: 'u64'
-        }
-      ]
+          type: 'u64',
+        },
+      ],
     },
     {
       name: 'updatePoolRewardParams',
@@ -406,43 +406,43 @@ export const SarosFarmIdl = {
         {
           name: 'root',
           isMut: false,
-          isSigner: true
+          isSigner: true,
         },
         {
           name: 'poolReward',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'rootRewardTokenAccount',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'poolRewardTokenAccount',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'tokenProgram',
           isMut: false,
-          isSigner: false
-        }
+          isSigner: false,
+        },
       ],
       args: [
         {
           name: 'newRewardPerBlock',
-          type: 'u128'
+          type: 'u128',
         },
         {
           name: 'newStartBlock',
-          type: 'u64'
+          type: 'u64',
         },
         {
           name: 'newEndBlock',
-          type: 'u64'
-        }
-      ]
+          type: 'u64',
+        },
+      ],
     },
     {
       name: 'withdrawRewardToken',
@@ -450,41 +450,41 @@ export const SarosFarmIdl = {
         {
           name: 'root',
           isMut: false,
-          isSigner: true
+          isSigner: true,
         },
         {
           name: 'poolReward',
           isMut: false,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'authority',
           isMut: false,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'from',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'to',
           isMut: true,
-          isSigner: false
+          isSigner: false,
         },
         {
           name: 'tokenProgram',
           isMut: false,
-          isSigner: false
-        }
+          isSigner: false,
+        },
       ],
       args: [
         {
           name: 'amount',
-          type: 'u64'
-        }
-      ]
-    }
+          type: 'u64',
+        },
+      ],
+    },
   ],
   accounts: [
     {
@@ -494,28 +494,28 @@ export const SarosFarmIdl = {
         fields: [
           {
             name: 'nonce',
-            type: 'u8'
+            type: 'u8',
           },
           {
             name: 'authorityNonce',
-            type: 'u8'
+            type: 'u8',
           },
           {
             name: 'stakingTokenMint',
-            type: 'publicKey'
+            type: 'publicKey',
           },
           {
             name: 'stakingTokenAccount',
-            type: 'publicKey'
+            type: 'publicKey',
           },
           {
             name: 'state',
             type: {
-              defined: 'PoolState'
-            }
-          }
-        ]
-      }
+              defined: 'PoolState',
+            },
+          },
+        ],
+      },
     },
     {
       name: 'PoolReward',
@@ -524,52 +524,52 @@ export const SarosFarmIdl = {
         fields: [
           {
             name: 'nonce',
-            type: 'u8'
+            type: 'u8',
           },
           {
             name: 'authorityNonce',
-            type: 'u8'
+            type: 'u8',
           },
           {
             name: 'rewardTokenMint',
-            type: 'publicKey'
+            type: 'publicKey',
           },
           {
             name: 'rewardTokenAccount',
-            type: 'publicKey'
+            type: 'publicKey',
           },
           {
             name: 'rewardPerBlock',
-            type: 'u128'
+            type: 'u128',
           },
           {
             name: 'rewardEndBlock',
-            type: 'u64'
+            type: 'u64',
           },
           {
             name: 'totalShares',
-            type: 'u64'
+            type: 'u64',
           },
           {
             name: 'accumulatedRewardPerShare',
-            type: 'u128'
+            type: 'u128',
           },
           {
             name: 'lastUpdatedBlock',
-            type: 'u64'
+            type: 'u64',
           },
           {
             name: 'totalClaimed',
-            type: 'u64'
+            type: 'u64',
           },
           {
             name: 'state',
             type: {
-              defined: 'PoolState'
-            }
-          }
-        ]
-      }
+              defined: 'PoolState',
+            },
+          },
+        ],
+      },
     },
     {
       name: 'UserPool',
@@ -578,18 +578,18 @@ export const SarosFarmIdl = {
         fields: [
           {
             name: 'nonce',
-            type: 'u8'
+            type: 'u8',
           },
           {
             name: 'amount',
-            type: 'u64'
+            type: 'u64',
           },
           {
             name: 'totalStaked',
-            type: 'u64'
-          }
-        ]
-      }
+            type: 'u64',
+          },
+        ],
+      },
     },
     {
       name: 'UserPoolReward',
@@ -598,23 +598,23 @@ export const SarosFarmIdl = {
         fields: [
           {
             name: 'nonce',
-            type: 'u8'
+            type: 'u8',
           },
           {
             name: 'amount',
-            type: 'u64'
+            type: 'u64',
           },
           {
             name: 'rewardDebt',
-            type: 'u64'
+            type: 'u64',
           },
           {
             name: 'rewardPending',
-            type: 'u64'
-          }
-        ]
-      }
-    }
+            type: 'u64',
+          },
+        ],
+      },
+    },
   ],
   types: [
     {
@@ -624,14 +624,14 @@ export const SarosFarmIdl = {
         fields: [
           {
             name: 'instruction',
-            type: 'u8'
+            type: 'u8',
           },
           {
             name: 'amount',
-            type: 'u64'
-          }
-        ]
-      }
+            type: 'u64',
+          },
+        ],
+      },
     },
     {
       name: 'PoolState',
@@ -639,14 +639,14 @@ export const SarosFarmIdl = {
         kind: 'enum',
         variants: [
           {
-            name: 'Paused'
+            name: 'Paused',
           },
           {
-            name: 'Unpaused'
-          }
-        ]
-      }
-    }
+            name: 'Unpaused',
+          },
+        ],
+      },
+    },
   ],
   events: [
     {
@@ -655,9 +655,9 @@ export const SarosFarmIdl = {
         {
           name: 'isPause',
           type: 'bool',
-          index: false
-        }
-      ]
+          index: false,
+        },
+      ],
     },
     {
       name: 'SetPauseRewardPoolEvent',
@@ -665,9 +665,9 @@ export const SarosFarmIdl = {
         {
           name: 'isPause',
           type: 'bool',
-          index: false
-        }
-      ]
+          index: false,
+        },
+      ],
     },
     {
       name: 'UpdatePoolRewardParamsEvent',
@@ -675,19 +675,19 @@ export const SarosFarmIdl = {
         {
           name: 'newRewardPerBlock',
           type: 'u128',
-          index: false
+          index: false,
         },
         {
           name: 'newStartBlock',
           type: 'u64',
-          index: false
+          index: false,
         },
         {
           name: 'newEndBlock',
           type: 'u64',
-          index: false
-        }
-      ]
+          index: false,
+        },
+      ],
     },
     {
       name: 'WithdrawRewardTokenEvent',
@@ -695,51 +695,51 @@ export const SarosFarmIdl = {
         {
           name: 'amount',
           type: 'u64',
-          index: false
-        }
-      ]
-    }
+          index: false,
+        },
+      ],
+    },
   ],
   errors: [
     {
       code: 6000,
       name: 'InvalidOwner',
-      msg: 'SarosFarm: Not an owner.'
+      msg: 'SarosFarm: Not an owner.',
     },
     {
       code: 6001,
       name: 'InvalidPoolLpTokenAccount',
-      msg: 'SarosFarm: Invalid pool LP token account.'
+      msg: 'SarosFarm: Invalid pool LP token account.',
     },
     {
       code: 6002,
       name: 'InvalidPoolRewardTokenAccount',
-      msg: 'SarosFarm: Invalid reward token account.'
+      msg: 'SarosFarm: Invalid reward token account.',
     },
     {
       code: 6003,
       name: 'InvalidWithdrawAmount',
-      msg: 'SarosFarm: Invalid withdraw amount.'
+      msg: 'SarosFarm: Invalid withdraw amount.',
     },
     {
       code: 6004,
       name: 'CantWithdrawNow',
-      msg: 'SarosFarm: Cannot withdraw now.'
+      msg: 'SarosFarm: Cannot withdraw now.',
     },
     {
       code: 6005,
       name: 'TimeOverlap',
-      msg: 'SarosFarm: Time overlap.'
+      msg: 'SarosFarm: Time overlap.',
     },
     {
       code: 6006,
       name: 'PoolWasPaused',
-      msg: 'SarosFarm: Pool was paused.'
+      msg: 'SarosFarm: Pool was paused.',
     },
     {
       code: 6007,
       name: 'UninitializedAccount',
-      msg: 'SarosFarm: Uninitialized account.'
-    }
-  ]
-}
+      msg: 'SarosFarm: Uninitialized account.',
+    },
+  ],
+};

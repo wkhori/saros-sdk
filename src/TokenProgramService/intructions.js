@@ -1,14 +1,6 @@
-import {
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
-  PublicKey,
-} from '@solana/web3.js';
+import { SystemProgram, SYSVAR_RENT_PUBKEY, TransactionInstruction, PublicKey } from '@solana/web3.js';
 import { BorshService } from '../common/borshService';
-import {
-  ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-} from '../constants';
+import { ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID, TOKEN_PROGRAM_ID } from '../constants';
 import * as borsh from '@project-serum/borsh';
 import BN from 'bn.js';
 
@@ -58,34 +50,20 @@ const TOKEN_PROGRAM_LAYOUT = {
 
 export class TokenProgramInstructionService {
   static decodeTokenMintInfo(data) {
-    const decodedData = BorshService.deserialize(
-      TOKEN_PROGRAM_LAYOUT.TOKEN_MINT,
-      data
-    );
+    const decodedData = BorshService.deserialize(TOKEN_PROGRAM_LAYOUT.TOKEN_MINT, data);
     return {
       supply: decodedData.supply,
       decimals: decodedData.decimals,
       isInitialized: decodedData.isInitialized !== 0,
-      mintAuthority:
-        decodedData.mintAuthorityOption === 0
-          ? null
-          : decodedData.mintAuthority,
-      freezeAuthority:
-        decodedData.freezeAuthorityOption === 0
-          ? null
-          : decodedData.freezeAuthority,
+      mintAuthority: decodedData.mintAuthorityOption === 0 ? null : decodedData.mintAuthority,
+      freezeAuthority: decodedData.freezeAuthorityOption === 0 ? null : decodedData.freezeAuthority,
     };
   }
-  static async createAssociatedTokenAccount(
-    payerAddress,
-    ownerAddress,
-    tokenMintAddress
-  ) {
-    const tokenAccountAddress =
-      await TokenProgramInstructionService.findAssociatedTokenAddress(
-        ownerAddress,
-        tokenMintAddress
-      );
+  static async createAssociatedTokenAccount(payerAddress, ownerAddress, tokenMintAddress) {
+    const tokenAccountAddress = await TokenProgramInstructionService.findAssociatedTokenAddress(
+      ownerAddress,
+      tokenMintAddress
+    );
     const request = {};
     const keys = [
       { pubkey: payerAddress, isSigner: true, isWritable: true },
@@ -96,11 +74,7 @@ export class TokenProgramInstructionService {
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
       { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
     ];
-    const data = BorshService.serialize(
-      CREATE_ASSOCIATED_TOKEN_ACCOUNT_LAYOUT,
-      request,
-      10
-    );
+    const data = BorshService.serialize(CREATE_ASSOCIATED_TOKEN_ACCOUNT_LAYOUT, request, 10);
 
     return new TransactionInstruction({
       keys,
@@ -111,39 +85,25 @@ export class TokenProgramInstructionService {
 
   static async findAssociatedTokenAddress(walletAddress, tokenMintAddress) {
     const [address] = await PublicKey.findProgramAddress(
-      [
-        walletAddress.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        tokenMintAddress.toBuffer(),
-      ],
+      [walletAddress.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), tokenMintAddress.toBuffer()],
       ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
     );
     return address;
   }
 
   static decodeTokenAccountInfo(data) {
-    const decodedData = BorshService.deserialize(
-      TOKEN_PROGRAM_LAYOUT.TOKEN_ACCOUNT,
-      data
-    );
+    const decodedData = BorshService.deserialize(TOKEN_PROGRAM_LAYOUT.TOKEN_ACCOUNT, data);
     return {
       mint: decodedData.mint,
       owner: decodedData.owner,
       amount: decodedData.amount,
       delegate: decodedData.delegateOption === 0 ? null : decodedData.delegate,
-      delegatedAmount:
-        decodedData.delegateOption === 0
-          ? new BN(0)
-          : decodedData.delegatedAmount,
+      delegatedAmount: decodedData.delegateOption === 0 ? new BN(0) : decodedData.delegatedAmount,
       isInitialized: decodedData.state !== 0,
       isFrozen: decodedData.state === 2,
       isNative: decodedData.isNativeOption === 1,
-      rentExemptReserve:
-        decodedData.isNativeOption === 1 ? decodedData.isNative : null,
-      closeAuthority:
-        decodedData.closeAuthorityOption === 0
-          ? null
-          : decodedData.closeAuthority,
+      rentExemptReserve: decodedData.isNativeOption === 1 ? decodedData.isNative : null,
+      closeAuthority: decodedData.closeAuthorityOption === 0 ? null : decodedData.closeAuthority,
     };
   }
 }

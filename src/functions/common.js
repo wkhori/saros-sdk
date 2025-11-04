@@ -1,4 +1,4 @@
-import bigdecimal from "bigdecimal";
+import bigdecimal from 'bigdecimal';
 
 export const convertWeiToBalance = (strValue, iDecimal = 18) => {
   try {
@@ -15,7 +15,7 @@ export const convertBalanceToWei = (strValue, iDecimal = 18) => {
   try {
     const multiplyNum = new bigdecimal.BigDecimal(Math.pow(10, iDecimal));
     const convertValue = new bigdecimal.BigDecimal(String(strValue));
-    return multiplyNum.multiply(convertValue).toString().split(".")[0];
+    return multiplyNum.multiply(convertValue).toString().split('.')[0];
   } catch (err) {
     return 0;
   }

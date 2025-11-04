@@ -1,8 +1,8 @@
-/* eslint-disable no-undef */
-import * as borsh from '@project-serum/borsh'
-import { BorshService } from '../common/borshService'
-import * as BufferLayout from 'buffer-layout'
-import { TransactionInstruction } from '@solana/web3.js'
+ 
+import * as borsh from '@project-serum/borsh';
+import { BorshService } from '../common/borshService';
+import * as BufferLayout from 'buffer-layout';
+import { TransactionInstruction } from '@solana/web3.js';
 
 const TokenSwapLayout = borsh.struct([
   borsh.u8('version'),
@@ -24,12 +24,12 @@ const TokenSwapLayout = borsh.struct([
   borsh.u64('hostFeeNumerator'),
   borsh.u64('hostFeeDenominator'),
   borsh.u8('curveType'),
-  borsh.array(borsh.u8(), 32, 'curveParameters')
-])
+  borsh.array(borsh.u8(), 32, 'curveParameters'),
+]);
 
 export class SarosSwapInstructionService {
-  static decodePoolData (data) {
-    const dataDecoded = BorshService.deserialize(TokenSwapLayout, data)
+  static decodePoolData(data) {
+    const dataDecoded = BorshService.deserialize(TokenSwapLayout, data);
     return {
       version: dataDecoded.version,
       isInitialized: dataDecoded.isInitialized !== 0,
@@ -50,11 +50,11 @@ export class SarosSwapInstructionService {
       hostFeeNumerator: dataDecoded.hostFeeNumerator,
       hostFeeDenominator: dataDecoded.hostFeeDenominator,
       curveType: dataDecoded.curveType,
-      curveParameters: dataDecoded.curveParameters
-    }
+      curveParameters: dataDecoded.curveParameters,
+    };
   }
 
-  static createInitSwapInstruction (
+  static createInitSwapInstruction(
     tokenSwapAccount,
     authority,
     tokenAccountA,
@@ -83,8 +83,8 @@ export class SarosSwapInstructionService {
       { pubkey: tokenPool, isSigner: false, isWritable: true },
       { pubkey: feeAccount, isSigner: false, isWritable: false },
       { pubkey: tokenAccountPool, isSigner: false, isWritable: true },
-      { pubkey: tokenProgramId, isSigner: false, isWritable: false }
-    ]
+      { pubkey: tokenProgramId, isSigner: false, isWritable: false },
+    ];
     const commandDataLayout = borsh.struct([
       borsh.u8('instruction'),
       borsh.u64('tradeFeeNumerator'),
@@ -96,10 +96,10 @@ export class SarosSwapInstructionService {
       borsh.u64('hostFeeNumerator'),
       borsh.u64('hostFeeDenominator'),
       borsh.u8('curveType'),
-      BufferLayout.blob(32, 'curveParameters')
-    ])
-    const curveParamsBuffer = Buffer.alloc(32)
-    curveParameters.toArrayLike(Buffer).copy(curveParamsBuffer)
+      BufferLayout.blob(32, 'curveParameters'),
+    ]);
+    const curveParamsBuffer = Buffer.alloc(32);
+    curveParameters.toArrayLike(Buffer).copy(curveParamsBuffer);
     const data = serialize(
       commandDataLayout,
       {
@@ -113,19 +113,19 @@ export class SarosSwapInstructionService {
         hostFeeNumerator,
         hostFeeDenominator,
         curveType,
-        curveParameters: curveParamsBuffer
+        curveParameters: curveParamsBuffer,
       },
       1024
-    )
+    );
 
     return new TransactionInstruction({
       keys,
       programId: swapProgramId,
-      data
-    })
+      data,
+    });
   }
 
-  static depositAllTokenTypesInstruction (
+  static depositAllTokenTypesInstruction(
     tokenSwap,
     authority,
     userTransferAuthority,
@@ -145,8 +145,8 @@ export class SarosSwapInstructionService {
       borsh.u8('instruction'),
       borsh.u64('poolTokenAmount'),
       borsh.u64('maximumTokenA'),
-      borsh.u64('maximumTokenB')
-    ])
+      borsh.u64('maximumTokenB'),
+    ]);
 
     const data = serialize(
       dataLayout,
@@ -154,10 +154,10 @@ export class SarosSwapInstructionService {
         instruction: 2, // Deposit instruction
         poolTokenAmount,
         maximumTokenA,
-        maximumTokenB
+        maximumTokenB,
       },
       64
-    )
+    );
 
     const keys = [
       { pubkey: tokenSwap, isSigner: false, isWritable: false },
@@ -169,16 +169,16 @@ export class SarosSwapInstructionService {
       { pubkey: intoB, isSigner: false, isWritable: true },
       { pubkey: poolToken, isSigner: false, isWritable: true },
       { pubkey: poolAccount, isSigner: false, isWritable: true },
-      { pubkey: tokenProgramId, isSigner: false, isWritable: false }
-    ]
+      { pubkey: tokenProgramId, isSigner: false, isWritable: false },
+    ];
     return new TransactionInstruction({
       keys,
       programId: swapProgramId,
-      data
-    })
+      data,
+    });
   }
 
-  static withdrawAllTokenTypesInstruction (
+  static withdrawAllTokenTypesInstruction(
     tokenSwap,
     authority,
     userTransferAuthority,
@@ -199,8 +199,8 @@ export class SarosSwapInstructionService {
       borsh.u8('instruction'),
       borsh.u64('poolTokenAmount'),
       borsh.u64('minimumTokenA'),
-      borsh.u64('minimumTokenB')
-    ])
+      borsh.u64('minimumTokenB'),
+    ]);
 
     const data = serialize(
       dataLayout,
@@ -208,10 +208,10 @@ export class SarosSwapInstructionService {
         instruction: 3, // Withdraw instruction
         poolTokenAmount,
         minimumTokenA,
-        minimumTokenB
+        minimumTokenB,
       },
       64
-    )
+    );
 
     const keys = [
       { pubkey: tokenSwap, isSigner: false, isWritable: false },
@@ -224,16 +224,16 @@ export class SarosSwapInstructionService {
       { pubkey: userAccountA, isSigner: false, isWritable: true },
       { pubkey: userAccountB, isSigner: false, isWritable: true },
       { pubkey: feeAccount, isSigner: false, isWritable: true },
-      { pubkey: tokenProgramId, isSigner: false, isWritable: false }
-    ]
+      { pubkey: tokenProgramId, isSigner: false, isWritable: false },
+    ];
     return new TransactionInstruction({
       keys,
       programId: swapProgramId,
-      data
-    })
+      data,
+    });
   }
 
-  static createSwapInstruction (
+  static createSwapInstruction(
     tokenSwap,
     authority,
     userTransferAuthority,
@@ -249,20 +249,16 @@ export class SarosSwapInstructionService {
     amountIn,
     minimumAmountOut
   ) {
-    const dataLayout = borsh.struct([
-      borsh.u8('instruction'),
-      borsh.u64('amountIn'),
-      borsh.u64('minimumAmountOut')
-    ])
+    const dataLayout = borsh.struct([borsh.u8('instruction'), borsh.u64('amountIn'), borsh.u64('minimumAmountOut')]);
     const data = serialize(
       dataLayout,
       {
         instruction: 1, // Swap instruction
         amountIn,
-        minimumAmountOut
+        minimumAmountOut,
       },
       128
-    )
+    );
 
     const keys = [
       { pubkey: tokenSwap, isSigner: false, isWritable: false },
@@ -274,21 +270,21 @@ export class SarosSwapInstructionService {
       { pubkey: userDestination, isSigner: false, isWritable: true },
       { pubkey: poolMint, isSigner: false, isWritable: true },
       { pubkey: feeAccount, isSigner: false, isWritable: true },
-      { pubkey: tokenProgramId, isSigner: false, isWritable: false }
-    ]
+      { pubkey: tokenProgramId, isSigner: false, isWritable: false },
+    ];
     if (hostFeeAccount !== null) {
-      keys.push({ pubkey: hostFeeAccount, isSigner: false, isWritable: true })
+      keys.push({ pubkey: hostFeeAccount, isSigner: false, isWritable: true });
     }
     return new TransactionInstruction({
       keys,
       programId: swapProgramId,
-      data
-    })
+      data,
+    });
   }
 }
 
-function serialize (layout, data, maxSpan) {
-  const buffer = Buffer.alloc(maxSpan)
-  const span = layout.encode(data, buffer)
-  return buffer.slice(0, span)
+function serialize(layout, data, maxSpan) {
+  const buffer = Buffer.alloc(maxSpan);
+  const span = layout.encode(data, buffer);
+  return buffer.slice(0, span);
 }

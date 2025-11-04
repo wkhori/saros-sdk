@@ -1,1 +1,1 @@
-export { SarosStakeServices  } from './SarosStakeServices';
+export { SarosStakeServices } from './SarosStakeServices';

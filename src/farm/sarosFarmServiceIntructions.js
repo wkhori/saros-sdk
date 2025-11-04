@@ -5,13 +5,7 @@ import { SarosFarmIdl, TOKEN_PROGRAM_ID } from '../constants';
 const coder = new BorshCoder(SarosFarmIdl);
 
 export class SarosFarmInstructionService {
-  static createUserPoolInstruction(
-    payerAddress,
-    poolAddress,
-    userPoolAddress,
-    userPoolNonce,
-    sarosFarmProgramAddress
-  ) {
+  static createUserPoolInstruction(payerAddress, poolAddress, userPoolAddress, userPoolNonce, sarosFarmProgramAddress) {
     const request = {
       userPoolNonce,
     };

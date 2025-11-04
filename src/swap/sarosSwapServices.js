@@ -1,4 +1,4 @@
-/* eslint-disable new-cap */
+ 
 import { SarosSwapInstructionService } from './sarosSwapIntructions';
 import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
 import { cloneDeep } from 'lodash';
@@ -20,11 +20,7 @@ import {
 } from '../constants';
 import { TokenProgramInstructionService } from '../common/tokenProgramInstructionService';
 import { closeAccount } from '@project-serum/serum/lib/token-instructions';
-import {
-  convertBalanceToWei,
-  convertWeiToBalance,
-  renderAmountSlippage,
-} from '../functions';
+import { convertBalanceToWei, convertWeiToBalance, renderAmountSlippage } from '../functions';
 import {
   findAssociatedTokenAddress,
   getTokenAccountInfo,
@@ -44,14 +40,8 @@ export const getPoolInfo = async (connection, poolAddress) => {
   return SarosSwapInstructionService.decodePoolData(accountInfo.data);
 };
 
-export const tradingTokensToPoolTokens = (
-  sourceAmount,
-  swapSourceAmount,
-  poolAmount
-) => {
-  const tradingFee =
-    (sourceAmount / 2) *
-    (TRADING_FEE_NUMERATOR.toNumber() / TRADING_FEE_DENOMINATOR.toNumber());
+export const tradingTokensToPoolTokens = (sourceAmount, swapSourceAmount, poolAmount) => {
+  const tradingFee = (sourceAmount / 2) * (TRADING_FEE_NUMERATOR.toNumber() / TRADING_FEE_DENOMINATOR.toNumber());
   const sourceAmountPostFee = sourceAmount - tradingFee;
   const root = Math.sqrt(sourceAmountPostFee / swapSourceAmount + 1);
 
@@ -60,24 +50,15 @@ export const tradingTokensToPoolTokens = (
 
 export const findPoolSeed = (tokenSwapProgramId) => {
   const newToken = Keypair.generate();
-  return PublicKey.findProgramAddress(
-    [newToken.publicKey.toBuffer()],
-    tokenSwapProgramId
-  );
+  return PublicKey.findProgramAddress([newToken.publicKey.toBuffer()], tokenSwapProgramId);
 };
 
 export const createPoolSeed = (address, tokenSwapProgramId) => {
-  return PublicKey.createProgramAddress(
-    [address.toBuffer()],
-    tokenSwapProgramId
-  );
+  return PublicKey.createProgramAddress([address.toBuffer()], tokenSwapProgramId);
 };
 
 export const findPoolAuthorityAddress = (poolAddress, tokenSwapProgramId) => {
-  return PublicKey.findProgramAddress(
-    [poolAddress.toBuffer()],
-    tokenSwapProgramId
-  );
+  return PublicKey.findProgramAddress([poolAddress.toBuffer()], tokenSwapProgramId);
 };
 
 export const createPool = async (
@@ -99,104 +80,80 @@ export const createPool = async (
   const payerAccount = await genOwnerSolana(owner);
   const [poolAccountSeed] = await findPoolSeed(sarosSwapProgramId);
   const poolAccount = Keypair.fromSeed(poolAccountSeed.toBuffer());
-  const [poolAuthorityAddress] = await findPoolAuthorityAddress(
-    poolAccount.publicKey,
-    sarosSwapProgramId
-  );
+  const [poolAuthorityAddress] = await findPoolAuthorityAddress(poolAccount.publicKey, sarosSwapProgramId);
   const poolLpMintAccount = Keypair.fromSeed(poolAuthorityAddress.toBuffer());
 
   if (!(await isAddressInUse(connection, poolLpMintAccount.publicKey))) {
-    const lamportsToInitializeMint =
-      await connection.getMinimumBalanceForRentExemption(INITIALIZE_MINT_SPAN);
-    const initMintTransaction =
-      await TokenProgramInstructionService.createInitializeMintTransaction(
-        payerAccount.publicKey,
-        poolLpMintAccount.publicKey,
-        2,
-        poolAuthorityAddress,
-        null,
-        lamportsToInitializeMint
-      );
+    const lamportsToInitializeMint = await connection.getMinimumBalanceForRentExemption(INITIALIZE_MINT_SPAN);
+    const initMintTransaction = await TokenProgramInstructionService.createInitializeMintTransaction(
+      payerAccount.publicKey,
+      poolLpMintAccount.publicKey,
+      2,
+      poolAuthorityAddress,
+      null,
+      lamportsToInitializeMint
+    );
     transaction.add(initMintTransaction.instructions[0]);
     transaction.add(initMintTransaction.instructions[1]);
   }
-  const poolToken0Address = await findAssociatedTokenAddress(
-    poolAuthorityAddress,
-    token0MintAddress
-  );
+  const poolToken0Address = await findAssociatedTokenAddress(poolAuthorityAddress, token0MintAddress);
   if (!(await isAddressInUse(connection, poolToken0Address))) {
-    const createATPATransaction =
-      await TokenProgramInstructionService.createAssociatedTokenAccountTransaction(
-        payerAccount.publicKey,
-        poolAuthorityAddress,
-        token0MintAddress
-      );
+    const createATPATransaction = await TokenProgramInstructionService.createAssociatedTokenAccountTransaction(
+      payerAccount.publicKey,
+      poolAuthorityAddress,
+      token0MintAddress
+    );
     transaction.add(createATPATransaction.instructions[0]);
   }
-  const poolToken1Address = await findAssociatedTokenAddress(
-    poolAuthorityAddress,
-    token1MintAddress
-  );
+  const poolToken1Address = await findAssociatedTokenAddress(poolAuthorityAddress, token1MintAddress);
   if (!(await isAddressInUse(connection, poolToken1Address))) {
-    const createATPATransaction =
-      await TokenProgramInstructionService.createAssociatedTokenAccountTransaction(
-        payerAccount.publicKey,
-        poolAuthorityAddress,
-        token1MintAddress
-      );
+    const createATPATransaction = await TokenProgramInstructionService.createAssociatedTokenAccountTransaction(
+      payerAccount.publicKey,
+      poolAuthorityAddress,
+      token1MintAddress
+    );
     transaction.add(createATPATransaction.instructions[0]);
   }
-  const poolLpTokenAddress = await findAssociatedTokenAddress(
-    payerAccount.publicKey,
-    poolLpMintAccount.publicKey
-  );
+  const poolLpTokenAddress = await findAssociatedTokenAddress(payerAccount.publicKey, poolLpMintAccount.publicKey);
   if (!(await isAddressInUse(connection, poolLpTokenAddress))) {
-    const createATPATransaction =
-      await TokenProgramInstructionService.createAssociatedTokenAccountTransaction(
-        payerAccount.publicKey,
-        payerAccount.publicKey,
-        poolLpMintAccount.publicKey
-      );
+    const createATPATransaction = await TokenProgramInstructionService.createAssociatedTokenAccountTransaction(
+      payerAccount.publicKey,
+      payerAccount.publicKey,
+      poolLpMintAccount.publicKey
+    );
     transaction.add(createATPATransaction.instructions[0]);
   }
 
-  const feeLpTokenAddress = await findAssociatedTokenAddress(
-    feeOwnerAddress,
-    poolLpMintAccount.publicKey
-  );
+  const feeLpTokenAddress = await findAssociatedTokenAddress(feeOwnerAddress, poolLpMintAccount.publicKey);
   if (
     payerAccount.publicKey.toBase58() !== feeOwnerAddress.toBase58() &&
     !(await isAddressInUse(connection, feeLpTokenAddress))
   ) {
-    const createATPATransaction =
-      await TokenProgramInstructionService.createAssociatedTokenAccountTransaction(
-        payerAccount.publicKey,
-        feeOwnerAddress,
-        poolLpMintAccount.publicKey
-      );
+    const createATPATransaction = await TokenProgramInstructionService.createAssociatedTokenAccountTransaction(
+      payerAccount.publicKey,
+      feeOwnerAddress,
+      poolLpMintAccount.publicKey
+    );
     transaction.add(createATPATransaction.instructions[0]);
   }
 
-  const transferToken0Transaction =
-    await TokenProgramInstructionService.createTransferTransaction(
-      payerAccount.publicKey,
-      token0Address,
-      poolToken0Address,
-      token0Amount
-    );
+  const transferToken0Transaction = await TokenProgramInstructionService.createTransferTransaction(
+    payerAccount.publicKey,
+    token0Address,
+    poolToken0Address,
+    token0Amount
+  );
   transaction.add(transferToken0Transaction.instructions[0]);
 
-  const transferToken1Transaction =
-    await TokenProgramInstructionService.createTransferTransaction(
-      payerAccount.publicKey,
-      token1Address,
-      poolToken1Address,
-      token1Amount
-    );
+  const transferToken1Transaction = await TokenProgramInstructionService.createTransferTransaction(
+    payerAccount.publicKey,
+    token1Address,
+    poolToken1Address,
+    token1Amount
+  );
   transaction.add(transferToken1Transaction.instructions[0]);
 
-  const lamportsToCreatePool =
-    await connection.getMinimumBalanceForRentExemption(INITIALIZE_POOL_SPAN);
+  const lamportsToCreatePool = await connection.getMinimumBalanceForRentExemption(INITIALIZE_POOL_SPAN);
   transaction.add(
     SystemProgram.createAccount({
       fromPubkey: payerAccount.publicKey,
@@ -206,28 +163,27 @@ export const createPool = async (
       programId: sarosSwapProgramId,
     })
   );
-  const tokenSwapInstruction =
-    SarosSwapInstructionService.createInitSwapInstruction(
-      poolAccount,
-      poolAuthorityAddress,
-      poolToken0Address,
-      poolToken1Address,
-      poolLpMintAccount.publicKey,
-      feeLpTokenAddress,
-      poolLpTokenAddress,
-      tokenProgramId,
-      sarosSwapProgramId,
-      TRADING_FEE_NUMERATOR,
-      TRADING_FEE_DENOMINATOR,
-      OWNER_TRADING_FEE_NUMERATOR,
-      OWNER_TRADING_FEE_DENOMINATOR,
-      OWNER_WITHDRAW_FEE_NUMERATOR,
-      OWNER_WITHDRAW_FEE_DENOMINATOR,
-      HOST_FEE_NUMERATOR,
-      HOST_FEE_DENOMINATOR,
-      curveType,
-      curveParameters
-    );
+  const tokenSwapInstruction = SarosSwapInstructionService.createInitSwapInstruction(
+    poolAccount,
+    poolAuthorityAddress,
+    poolToken0Address,
+    poolToken1Address,
+    poolLpMintAccount.publicKey,
+    feeLpTokenAddress,
+    poolLpTokenAddress,
+    tokenProgramId,
+    sarosSwapProgramId,
+    TRADING_FEE_NUMERATOR,
+    TRADING_FEE_DENOMINATOR,
+    OWNER_TRADING_FEE_NUMERATOR,
+    OWNER_TRADING_FEE_DENOMINATOR,
+    OWNER_WITHDRAW_FEE_NUMERATOR,
+    OWNER_WITHDRAW_FEE_DENOMINATOR,
+    HOST_FEE_NUMERATOR,
+    HOST_FEE_DENOMINATOR,
+    curveType,
+    curveParameters
+  );
   transaction.add(tokenSwapInstruction);
 
   if (token0MintAddress.toString() === NATIVE_SOL.mintAddress) {
@@ -279,73 +235,49 @@ export const withdrawAllTokenTypes = async (
   const payerAccount = await genOwnerSolana(walletAddress);
   const delegateAccount = await genOwnerSolana(walletAddress);
   const transaction = await createTransactions(connection, walletAddress);
-  const [poolAuthorityAddress] = await findPoolAuthorityAddress(
-    poolAddress,
-    tokenSwapProgramId
-  );
+  const [poolAuthorityAddress] = await findPoolAuthorityAddress(poolAddress, tokenSwapProgramId);
 
   const poolAccountInfo = await getPoolInfo(connection, poolAddress);
 
-  const poolLpMintInfo = await getTokenMintInfo(
-    connection,
-    poolAccountInfo.lpTokenMint
-  );
+  const poolLpMintInfo = await getTokenMintInfo(connection, poolAccountInfo.lpTokenMint);
   const lpTokenSupply = poolLpMintInfo.supply.toNumber();
 
   let feeAmount = 0;
   if (OWNER_WITHDRAW_FEE_NUMERATOR.toNumber() !== 0) {
     feeAmount = Math.floor(
-      (lpTokenAmount * OWNER_WITHDRAW_FEE_NUMERATOR.toNumber()) /
-        OWNER_WITHDRAW_FEE_DENOMINATOR.toNumber()
+      (lpTokenAmount * OWNER_WITHDRAW_FEE_NUMERATOR.toNumber()) / OWNER_WITHDRAW_FEE_DENOMINATOR.toNumber()
     );
   }
   const withdrawLpTokenAmount = lpTokenAmount - feeAmount;
 
-  const poolToken0AccountInfo = await getTokenAccountInfo(
-    connection,
-    poolAccountInfo.token0Account
-  );
+  const poolToken0AccountInfo = await getTokenAccountInfo(connection, poolAccountInfo.token0Account);
 
-  const newAmount0 = Math.floor(
-    (poolToken0AccountInfo.amount.toNumber() * withdrawLpTokenAmount) /
-      lpTokenSupply
-  );
+  const newAmount0 = Math.floor((poolToken0AccountInfo.amount.toNumber() * withdrawLpTokenAmount) / lpTokenSupply);
 
-  const token0Amount = Math.floor(
-    newAmount0 - renderAmountSlippage(newAmount0, slippage)
-  );
+  const token0Amount = Math.floor(newAmount0 - renderAmountSlippage(newAmount0, slippage));
 
-  const poolToken1AccountInfo = await getTokenAccountInfo(
-    connection,
-    poolAccountInfo.token1Account
-  );
+  const poolToken1AccountInfo = await getTokenAccountInfo(connection, poolAccountInfo.token1Account);
 
-  const newAmount1 = Math.floor(
-    (poolToken1AccountInfo.amount.toNumber() * withdrawLpTokenAmount) /
-      lpTokenSupply
-  );
-  const token1Amount = Math.floor(
-    newAmount1 - renderAmountSlippage(newAmount1, slippage)
-  );
+  const newAmount1 = Math.floor((poolToken1AccountInfo.amount.toNumber() * withdrawLpTokenAmount) / lpTokenSupply);
+  const token1Amount = Math.floor(newAmount1 - renderAmountSlippage(newAmount1, slippage));
 
-  const withdrawInstruction =
-    SarosSwapInstructionService.withdrawAllTokenTypesInstruction(
-      poolAddress,
-      poolAuthorityAddress,
-      delegateAccount.publicKey,
-      poolAccountInfo.lpTokenMint,
-      poolAccountInfo.feeAccount,
-      userLpTokenAddress,
-      poolAccountInfo.token0Account,
-      poolAccountInfo.token1Account,
-      userToken0Address,
-      userToken1Address,
-      tokenSwapProgramId,
-      TOKEN_PROGRAM_ID,
-      new BN(lpTokenAmount),
-      new BN(token0Amount),
-      new BN(token1Amount)
-    );
+  const withdrawInstruction = SarosSwapInstructionService.withdrawAllTokenTypesInstruction(
+    poolAddress,
+    poolAuthorityAddress,
+    delegateAccount.publicKey,
+    poolAccountInfo.lpTokenMint,
+    poolAccountInfo.feeAccount,
+    userLpTokenAddress,
+    poolAccountInfo.token0Account,
+    poolAccountInfo.token1Account,
+    userToken0Address,
+    userToken1Address,
+    tokenSwapProgramId,
+    TOKEN_PROGRAM_ID,
+    new BN(lpTokenAmount),
+    new BN(token0Amount),
+    new BN(token1Amount)
+  );
   transaction.add(withdrawInstruction);
 
   if (token0MintAddress.toString() === NATIVE_SOL.mintAddress) {
@@ -368,9 +300,7 @@ export const withdrawAllTokenTypes = async (
     );
   }
 
-  const result = await sendTransaction(connection, transaction, [
-    delegateAccount,
-  ]);
+  const result = await sendTransaction(connection, transaction, [delegateAccount]);
 
   if (messFail.includes(result)) {
     return { isError: true, mess: result };
@@ -396,72 +326,47 @@ export const depositAllTokenTypes = async (
   const poolAccountInfo = await getPoolInfo(connection, poolAddress);
   const payerAccount = await genOwnerSolana(walletAddress);
   const delegateAccount = await genOwnerSolana(walletAddress);
-  const poolLpMintInfo = await getTokenMintInfo(
-    connection,
-    poolAccountInfo.lpTokenMint
-  );
+  const poolLpMintInfo = await getTokenMintInfo(connection, poolAccountInfo.lpTokenMint);
   const lpTokenSupply = poolLpMintInfo.supply.toNumber();
 
-  const poolToken0AccountInfo = await getTokenAccountInfo(
-    connection,
-    poolAccountInfo.token0Account
-  );
+  const poolToken0AccountInfo = await getTokenAccountInfo(connection, poolAccountInfo.token0Account);
 
-  const newAmount0 = Math.floor(
-    (poolToken0AccountInfo.amount.toNumber() * lpTokenAmount) / lpTokenSupply
-  );
-  const token0Amount = Math.floor(
-    newAmount0 + renderAmountSlippage(newAmount0, slippage)
-  );
+  const newAmount0 = Math.floor((poolToken0AccountInfo.amount.toNumber() * lpTokenAmount) / lpTokenSupply);
+  const token0Amount = Math.floor(newAmount0 + renderAmountSlippage(newAmount0, slippage));
 
-  const poolToken1AccountInfo = await getTokenAccountInfo(
-    connection,
-    poolAccountInfo.token1Account
-  );
+  const poolToken1AccountInfo = await getTokenAccountInfo(connection, poolAccountInfo.token1Account);
 
-  const newAmount1 = Math.floor(
-    (poolToken1AccountInfo.amount.toNumber() * lpTokenAmount) / lpTokenSupply
-  );
-  const token1Amount = Math.floor(
-    newAmount1 + renderAmountSlippage(newAmount0, slippage)
-  );
+  const newAmount1 = Math.floor((poolToken1AccountInfo.amount.toNumber() * lpTokenAmount) / lpTokenSupply);
+  const token1Amount = Math.floor(newAmount1 + renderAmountSlippage(newAmount0, slippage));
 
-  const [poolAuthorityAddress] = await findPoolAuthorityAddress(
-    poolAddress,
-    tokenSwapProgramId
-  );
-  const userLpTokenAddress = await findAssociatedTokenAddress(
-    userAddress,
-    poolAccountInfo.lpTokenMint
-  );
+  const [poolAuthorityAddress] = await findPoolAuthorityAddress(poolAddress, tokenSwapProgramId);
+  const userLpTokenAddress = await findAssociatedTokenAddress(userAddress, poolAccountInfo.lpTokenMint);
 
   if (!(await isAddressInUse(connection, userLpTokenAddress))) {
-    const createATPATransaction =
-      await TokenProgramInstructionService.createAssociatedTokenAccountTransaction(
-        payerAccount.publicKey,
-        userAddress,
-        poolAccountInfo.lpTokenMint
-      );
+    const createATPATransaction = await TokenProgramInstructionService.createAssociatedTokenAccountTransaction(
+      payerAccount.publicKey,
+      userAddress,
+      poolAccountInfo.lpTokenMint
+    );
     transaction.add(createATPATransaction.instructions[0]);
   }
 
-  const depositInstruction =
-    await SarosSwapInstructionService.depositAllTokenTypesInstruction(
-      poolAddress,
-      poolAuthorityAddress,
-      delegateAccount.publicKey,
-      userToken0Address,
-      userToken1Address,
-      poolAccountInfo.token0Account,
-      poolAccountInfo.token1Account,
-      poolAccountInfo.lpTokenMint,
-      userLpTokenAddress,
-      tokenSwapProgramId,
-      TOKEN_PROGRAM_ID,
-      new BN(lpTokenAmount),
-      new BN(token0Amount),
-      new BN(token1Amount)
-    );
+  const depositInstruction = await SarosSwapInstructionService.depositAllTokenTypesInstruction(
+    poolAddress,
+    poolAuthorityAddress,
+    delegateAccount.publicKey,
+    userToken0Address,
+    userToken1Address,
+    poolAccountInfo.token0Account,
+    poolAccountInfo.token1Account,
+    poolAccountInfo.lpTokenMint,
+    userLpTokenAddress,
+    tokenSwapProgramId,
+    TOKEN_PROGRAM_ID,
+    new BN(lpTokenAmount),
+    new BN(token0Amount),
+    new BN(token1Amount)
+  );
 
   transaction.add(depositInstruction);
 
@@ -485,9 +390,7 @@ export const depositAllTokenTypes = async (
     );
   }
 
-  const result = await sendTransaction(connection, transaction, [
-    delegateAccount,
-  ]);
+  const result = await sendTransaction(connection, transaction, [delegateAccount]);
 
   if (messFail.includes(result)) {
     return { isError: true, mess: result };
@@ -514,10 +417,7 @@ export const swapSaros = async (
   const tokenSwapProgramId = SAROS_SWAP_PROGRAM_ADDRESS_V1;
   const owner = await genOwnerSolana(walletAddress);
   const signers = [owner.publicKey];
-  const [poolAuthorityAddress] = await findPoolAuthorityAddress(
-    poolAddress,
-    tokenSwapProgramId
-  );
+  const [poolAuthorityAddress] = await findPoolAuthorityAddress(poolAddress, tokenSwapProgramId);
   const poolAccountInfo = await getPoolInfo(connection, poolAddress);
   let fromMint = fromCoinMint;
   let toMint = toCoinMint;
@@ -559,38 +459,33 @@ export const swapSaros = async (
 
   let hostFeeTokenAddress = null;
   if (hostFeeOwnerAddress) {
-    hostFeeTokenAddress = await findAssociatedTokenAddress(
-      hostFeeOwnerAddress,
-      poolAccountInfo.lpTokenMint
-    );
+    hostFeeTokenAddress = await findAssociatedTokenAddress(hostFeeOwnerAddress, poolAccountInfo.lpTokenMint);
     if (!(await isAddressInUse(connection, hostFeeTokenAddress))) {
-      const createATPATransaction =
-        await TokenProgramInstructionService.createAssociatedTokenAccountTransaction(
-          owner.publicKey,
-          hostFeeOwnerAddress,
-          poolAccountInfo.lpTokenMint
-        );
+      const createATPATransaction = await TokenProgramInstructionService.createAssociatedTokenAccountTransaction(
+        owner.publicKey,
+        hostFeeOwnerAddress,
+        poolAccountInfo.lpTokenMint
+      );
       transaction.add(createATPATransaction.instructions[0]);
     }
   }
 
-  const swapInstruction =
-    await SarosSwapInstructionService.createSwapInstruction(
-      poolAddress,
-      poolAuthorityAddress,
-      owner.publicKey,
-      newFromAccount,
-      poolTokenSourceAddress,
-      poolTokenDestinationAddress,
-      newToAccount,
-      poolAccountInfo.lpTokenMint,
-      poolAccountInfo.feeAccount,
-      hostFeeTokenAddress,
-      tokenSwapProgramId,
-      TOKEN_PROGRAM_ID,
-      new BN(amountIn),
-      new BN(minimumAmountOut)
-    );
+  const swapInstruction = await SarosSwapInstructionService.createSwapInstruction(
+    poolAddress,
+    poolAuthorityAddress,
+    owner.publicKey,
+    newFromAccount,
+    poolTokenSourceAddress,
+    poolTokenDestinationAddress,
+    newToAccount,
+    poolAccountInfo.lpTokenMint,
+    poolAccountInfo.feeAccount,
+    hostFeeTokenAddress,
+    tokenSwapProgramId,
+    TOKEN_PROGRAM_ID,
+    new BN(amountIn),
+    new BN(minimumAmountOut)
+  );
   transaction.add(swapInstruction);
   if (fromMint.toString() === NATIVE_SOL.mintAddress) {
     transaction.add(
@@ -641,14 +536,8 @@ export const swapRouteSaros = async (
 ) => {
   const owner = await genOwnerSolana(walletAddress);
   const signers = [owner.publicKey];
-  const [poolAuthorityAddress] = await findPoolAuthorityAddress(
-    poolAddress,
-    tokenSwapProgramId
-  );
-  const [poolAuthorityAddressB] = await findPoolAuthorityAddress(
-    poolAddressB,
-    tokenSwapProgramId
-  );
+  const [poolAuthorityAddress] = await findPoolAuthorityAddress(poolAddress, tokenSwapProgramId);
+  const [poolAuthorityAddressB] = await findPoolAuthorityAddress(poolAddressB, tokenSwapProgramId);
   const poolAccountInfo = await getPoolInfo(connection, poolAddress);
   const poolAccountInfoB = await getPoolInfo(connection, poolAddressB);
   let fromMint = fromCoinMint;
@@ -714,40 +603,38 @@ export const swapRouteSaros = async (
     poolTokenDestinationAddress = poolAccountInfoB.token1Account;
   }
 
-  const swapInstruction =
-    await SarosSwapInstructionService.createSwapInstruction(
-      poolAddress,
-      poolAuthorityAddress,
-      owner.publicKey,
-      newFromAccount,
-      poolTokenSourceAddress,
-      poolTokenMiddleAddress,
-      newMiddleAccount,
-      poolAccountInfo.lpTokenMint,
-      poolAccountInfo.feeAccount,
-      null,
-      tokenSwapProgramId,
-      TOKEN_PROGRAM_ID,
-      new BN(amountIn),
-      new BN(middleAmount)
-    );
-  const swapInstructionB =
-    await SarosSwapInstructionService.createSwapInstruction(
-      poolAddressB,
-      poolAuthorityAddressB,
-      owner.publicKey,
-      newMiddleAccount,
-      poolTokenSourceAddressB,
-      poolTokenDestinationAddress,
-      newToAccount,
-      poolAccountInfoB.lpTokenMint,
-      poolAccountInfoB.feeAccount,
-      null,
-      tokenSwapProgramId,
-      TOKEN_PROGRAM_ID,
-      new BN(middleAmount),
-      new BN(minimumAmountOut)
-    );
+  const swapInstruction = await SarosSwapInstructionService.createSwapInstruction(
+    poolAddress,
+    poolAuthorityAddress,
+    owner.publicKey,
+    newFromAccount,
+    poolTokenSourceAddress,
+    poolTokenMiddleAddress,
+    newMiddleAccount,
+    poolAccountInfo.lpTokenMint,
+    poolAccountInfo.feeAccount,
+    null,
+    tokenSwapProgramId,
+    TOKEN_PROGRAM_ID,
+    new BN(amountIn),
+    new BN(middleAmount)
+  );
+  const swapInstructionB = await SarosSwapInstructionService.createSwapInstruction(
+    poolAddressB,
+    poolAuthorityAddressB,
+    owner.publicKey,
+    newMiddleAccount,
+    poolTokenSourceAddressB,
+    poolTokenDestinationAddress,
+    newToAccount,
+    poolAccountInfoB.lpTokenMint,
+    poolAccountInfoB.feeAccount,
+    null,
+    tokenSwapProgramId,
+    TOKEN_PROGRAM_ID,
+    new BN(middleAmount),
+    new BN(minimumAmountOut)
+  );
   transaction.add(swapInstruction);
   transaction.add(swapInstructionB);
   if (fromMint.toString() === NATIVE_SOL.mintAddress) {
@@ -779,12 +666,7 @@ export const swapRouteSaros = async (
       })
     );
   }
-  const hash = await sendTransaction(
-    connection,
-    transaction,
-    signers,
-    toastNotiWait
-  );
+  const hash = await sendTransaction(connection, transaction, signers, toastNotiWait);
   if (messFail.includes(hash)) {
     return { isError: true, mess: hash };
   }
@@ -797,25 +679,10 @@ export const getInfoByMintAddress = (mintAddress, lisToken) => {
   return info;
 };
 
-export const getSwapAmountSaros = async (
-  connection,
-  fromCoinMint,
-  toCoinMint,
-  amount,
-  slippage,
-  poolParams
-) => {
+export const getSwapAmountSaros = async (connection, fromCoinMint, toCoinMint, amount, slippage, poolParams) => {
   const { address, tokens } = poolParams;
-  const poolInfo = await getPoolInfo(
-    connection,
-    new PublicKey(address.toString())
-  );
-  const {
-    token0Account,
-    token1Account,
-    tradeFeeDenominator,
-    tradeFeeNumerator,
-  } = poolInfo;
+  const poolInfo = await getPoolInfo(connection, new PublicKey(address.toString()));
+  const { token0Account, token1Account, tradeFeeDenominator, tradeFeeNumerator } = poolInfo;
   const fromCoinMintClone = cloneDeep(fromCoinMint);
   const toCoinMintClone = cloneDeep(toCoinMint);
   const newSlippage = parseFloat(slippage);
@@ -824,52 +691,34 @@ export const getSwapAmountSaros = async (
     connection.getAccountInfo(new PublicKey(token0Account.toString())),
     connection.getAccountInfo(new PublicKey(token1Account.toString())),
   ]);
-  const tokenInfos = accountInfos.map((info) =>
-    info ? deserializeAccount(info.data) : undefined
-  );
+  const tokenInfos = accountInfos.map((info) => (info ? deserializeAccount(info.data) : undefined));
   if (!tokenInfos[0] || !tokenInfos[1]) return 0;
   const inputTokenAccount = tokenInfos[0];
   const inputTokenInfo = tokens[inputTokenAccount.mint.toString()];
   const outputTokenAccount = tokenInfos[1];
   const outputTokenInfo = tokens[outputTokenAccount.mint.toString()];
   const convertAmountInputToken = parseFloat(
-    convertWeiToBalance(
-      inputTokenAccount.amount.toNumber(),
-      inputTokenInfo.decimals
-    )
+    convertWeiToBalance(inputTokenAccount.amount.toNumber(), inputTokenInfo.decimals)
   );
   const convertAmountOutputToken = parseFloat(
-    convertWeiToBalance(
-      outputTokenAccount.amount.toNumber(),
-      outputTokenInfo.decimals
-    )
+    convertWeiToBalance(outputTokenAccount.amount.toNumber(), outputTokenInfo.decimals)
   );
   let fromAmountWithFee =
-    (newAmount *
-      (tradeFeeDenominator.toNumber() - tradeFeeNumerator.toNumber())) /
-    tradeFeeDenominator;
+    (newAmount * (tradeFeeDenominator.toNumber() - tradeFeeNumerator.toNumber())) / tradeFeeDenominator;
 
   if (tradeFeeDenominator.toNumber() === 0 || tradeFeeNumerator.toNumber()) {
     fromAmountWithFee = newAmount;
   }
   const rateEst = convertAmountOutputToken / convertAmountInputToken;
 
-  if (
-    fromCoinMintClone === inputTokenInfo.mintAddress &&
-    toCoinMintClone === outputTokenInfo.mintAddress
-  ) {
+  if (fromCoinMintClone === inputTokenInfo.mintAddress && toCoinMintClone === outputTokenInfo.mintAddress) {
     const denominator = convertAmountInputToken + fromAmountWithFee;
-    const amountOut =
-      (convertAmountOutputToken * fromAmountWithFee) / denominator;
+    const amountOut = (convertAmountOutputToken * fromAmountWithFee) / denominator;
     const amountOutWithSlippage = amountOut / (1 + newSlippage / 100);
     const outBalance = convertAmountOutputToken - amountOut;
     const beforePrice = convertAmountOutputToken / convertAmountInputToken;
     const afterPrice = outBalance / denominator;
-    const priceImpact = Math.abs(
-      ((parseFloat(beforePrice) - parseFloat(afterPrice)) /
-        parseFloat(beforePrice)) *
-        100
-    );
+    const priceImpact = Math.abs(((parseFloat(beforePrice) - parseFloat(afterPrice)) / parseFloat(beforePrice)) * 100);
     return {
       amountOut,
       amountOutWithSlippage,
@@ -878,17 +727,12 @@ export const getSwapAmountSaros = async (
     };
   } else {
     const denominator = convertAmountOutputToken + fromAmountWithFee;
-    const amountOut =
-      (convertAmountInputToken * fromAmountWithFee) / denominator;
+    const amountOut = (convertAmountInputToken * fromAmountWithFee) / denominator;
     const amountOutWithSlippage = amountOut / (1 + newSlippage / 100);
     const outBalance = convertAmountInputToken - amountOut;
     const beforePrice = convertAmountOutputToken / convertAmountInputToken;
     const afterPrice = denominator / outBalance;
-    const priceImpact = Math.abs(
-      ((parseFloat(afterPrice) - parseFloat(beforePrice)) /
-        parseFloat(beforePrice)) *
-        100
-    );
+    const priceImpact = Math.abs(((parseFloat(afterPrice) - parseFloat(beforePrice)) / parseFloat(beforePrice)) * 100);
     return {
       amountOut,
       amountOutWithSlippage,
