@@ -32,8 +32,6 @@ import sarosSdk, {
   getInfoTokenByMint,
   genConnectionSolana,
 } from '@saros-finance/sdk';
-import { GraphQLClient, gql } from 'graphql-request';
-
 import BN from 'bn.js';
 import { PublicKey } from '@solana/web3.js';
 
