@@ -20,3 +20,13 @@ export const convertBalanceToWei = (strValue, iDecimal = 18) => {
     return 0;
   }
 };
+
+export const renderAmountSlippage = (amount, slippage) => {
+  return (parseFloat(amount) * parseFloat(slippage)) / 100;
+};
+
+export const getPriceBaseId = async (id) => {
+  const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`);
+  const body = await response.json();
+  return get(body, `${id}.usd`, 0);
+};
