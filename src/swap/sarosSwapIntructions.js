@@ -1,6 +1,5 @@
- 
+
 import * as borsh from '@project-serum/borsh';
-import { BorshService } from '../common/borshService';
 import * as BufferLayout from 'buffer-layout';
 import { TransactionInstruction } from '@solana/web3.js';
 
@@ -29,7 +28,7 @@ const TokenSwapLayout = borsh.struct([
 
 export class SarosSwapInstructionService {
   static decodePoolData(data) {
-    const dataDecoded = BorshService.deserialize(TokenSwapLayout, data);
+    const dataDecoded = TokenSwapLayout.decode(data);
     return {
       version: dataDecoded.version,
       isInitialized: dataDecoded.isInitialized !== 0,

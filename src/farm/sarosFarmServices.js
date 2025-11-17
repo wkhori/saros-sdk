@@ -1,7 +1,6 @@
  
 import { PublicKey, Transaction } from '@solana/web3.js';
 import { getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, getAccount, getMint } from '@solana/spl-token';
-import { SolanaService } from '../SolanaService';
 import { SarosFarmInstructionService } from './sarosFarmServiceIntructions';
 import { BLOCKS_PER_YEAR, getPriceBaseId } from '../functions';
 import { getPoolInfo } from '../swap/sarosSwapServices';
@@ -36,7 +35,9 @@ export class SarosFarmService {
 
       const transaction = new Transaction();
 
-      if (await SolanaService.isAddressAvailable(connection, userStakingTokenAddress)) {
+      // Check if user staking token account exists, create if not
+      const userStakingTokenAccountInfo = await connection.getAccountInfo(userStakingTokenAddress);
+      if (userStakingTokenAccountInfo === null) {
         const createATAInstruction = createAssociatedTokenAccountInstruction(
           payerAccount.publicKey,
           userStakingTokenAddress,
@@ -46,7 +47,9 @@ export class SarosFarmService {
         transaction.add(createATAInstruction);
       }
 
-      if (await SolanaService.isAddressAvailable(connection, userPoolAddress)) {
+      // Check if user pool account exists, create if not
+      const userPoolAccountInfo = await connection.getAccountInfo(userPoolAddress);
+      if (userPoolAccountInfo === null) {
         const createUserPoolInstruction = SarosFarmInstructionService.createUserPoolInstruction(
           payerAccount.publicKey,
           poolAddress,
@@ -110,7 +113,9 @@ export class SarosFarmService {
       sarosFarmProgramAddress
     );
 
-    if (await SolanaService.isAddressAvailable(connection, userPoolRewardAddress)) {
+    // Check if user pool reward account exists, create if not
+    const userPoolRewardAccountInfo = await connection.getAccountInfo(userPoolRewardAddress);
+    if (userPoolRewardAccountInfo === null) {
       const createUserPoolRewardInstruction = SarosFarmInstructionService.createUserPoolRewardInstruction(
         payerAccount.publicKey,
         poolRewardAddress,
@@ -269,7 +274,9 @@ export class SarosFarmService {
 
       const transaction = new Transaction();
 
-      if (await SolanaService.isAddressAvailable(connection, userRewardTokenAddress)) {
+      // Check if user reward token account exists, create if not
+      const userRewardTokenAccountInfo = await connection.getAccountInfo(userRewardTokenAddress);
+      if (userRewardTokenAccountInfo === null) {
         const createATAInstruction = createAssociatedTokenAccountInstruction(
           payerAccount.publicKey,
           userRewardTokenAddress,

@@ -18,7 +18,7 @@ import {
   TRADING_FEE_DENOMINATOR,
   TRADING_FEE_NUMERATOR,
 } from '../constants';
-import { TokenProgramInstructionService } from '../common/tokenProgramInstructionService';
+import { TokenProgramInstructionService } from '../utils/tokenProgramInstructionService';
 import { closeAccount } from '@project-serum/serum/lib/token-instructions';
 import { convertBalanceToWei, convertWeiToBalance, renderAmountSlippage } from '../functions';
 import {
