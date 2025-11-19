@@ -1,17 +1,20 @@
- 
 import { PublicKey, Transaction } from '@solana/web3.js';
-import { getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, getAccount } from '@solana/spl-token';
-import { SolanaService } from '../SolanaService';
+import {
+  getAssociatedTokenAddress,
+  createAssociatedTokenAccountInstruction,
+  getAccount,
+  getMint,
+} from '@solana/spl-token';
+import { SarosFarmInstructionService } from './sarosFarmServiceIntructions';
 import { BLOCKS_PER_YEAR, getPriceBaseId } from '../functions';
 import { getPoolInfo } from '../swap/sarosSwapServices';
 import { genConnectionSolana } from '../common';
 import { get } from 'lodash';
 import { GraphQLClient, gql } from 'graphql-request';
-import { SarosFarmInstructionService } from '../farm/sarosFarmServiceIntructions';
 
 const gqlClient = new GraphQLClient('https://graphql.saros.finance/');
 
-export class SarosStakeServices {
+export class SarosFarmService {
   static async stakePool(
     connection,
     payerAccount,
@@ -23,10 +26,7 @@ export class SarosStakeServices {
   ) {
     try {
       const lpPublicKey = new PublicKey(lpAddress);
-      const userStakingTokenAddress = await getAssociatedTokenAddress(
-        lpPublicKey,
-        payerAccount.publicKey
-      );
+      const userStakingTokenAddress = await getAssociatedTokenAddress(lpPublicKey, payerAccount.publicKey);
       const pool = await this.getPoolData(connection, poolAddress);
       const [userPoolAddress, userPoolNonce] = await this.findUserPoolAddress(
         payerAccount.publicKey,
@@ -36,7 +36,9 @@ export class SarosStakeServices {
 
       const transaction = new Transaction();
 
-      if (await SolanaService.isAddressAvailable(connection, userStakingTokenAddress)) {
+      // Check if user staking token account exists, create if not
+      const userStakingTokenAccountInfo = await connection.getAccountInfo(userStakingTokenAddress);
+      if (userStakingTokenAccountInfo === null) {
         const createATAInstruction = createAssociatedTokenAccountInstruction(
           payerAccount.publicKey,
           userStakingTokenAddress,
@@ -46,7 +48,9 @@ export class SarosStakeServices {
         transaction.add(createATAInstruction);
       }
 
-      if (await SolanaService.isAddressAvailable(connection, userPoolAddress)) {
+      // Check if user pool account exists, create if not
+      const userPoolAccountInfo = await connection.getAccountInfo(userPoolAddress);
+      if (userPoolAccountInfo === null) {
         const createUserPoolInstruction = SarosFarmInstructionService.createUserPoolInstruction(
           payerAccount.publicKey,
           poolAddress,
@@ -110,7 +114,9 @@ export class SarosStakeServices {
       sarosFarmProgramAddress
     );
 
-    if (await SolanaService.isAddressAvailable(connection, userPoolRewardAddress)) {
+    // Check if user pool reward account exists, create if not
+    const userPoolRewardAccountInfo = await connection.getAccountInfo(userPoolRewardAddress);
+    if (userPoolRewardAccountInfo === null) {
       const createUserPoolRewardInstruction = SarosFarmInstructionService.createUserPoolRewardInstruction(
         payerAccount.publicKey,
         poolRewardAddress,
@@ -147,10 +153,7 @@ export class SarosStakeServices {
   ) {
     try {
       const lpPublicKey = new PublicKey(lpAddress);
-      const userStakingTokenAddress = await getAssociatedTokenAddress(
-        lpPublicKey,
-        payerAccount.publicKey
-      );
+      const userStakingTokenAddress = await getAssociatedTokenAddress(lpPublicKey, payerAccount.publicKey);
 
       const transaction = new Transaction();
 
@@ -249,12 +252,9 @@ export class SarosStakeServices {
   static async claimReward(connection, payerAccount, poolRewardAddress, sarosFarmProgramAddress, mintAddress) {
     try {
       const mintPublicKey = new PublicKey(mintAddress);
-      const userRewardTokenAddress = await getAssociatedTokenAddress(
-        mintPublicKey,
-        payerAccount.publicKey
-      );
+      const userRewardTokenAddress = await getAssociatedTokenAddress(mintPublicKey, payerAccount.publicKey);
 
-      const [userPoolRewardAddress] = await SarosStakeServices.findUserPoolRewardAddress(
+      const [userPoolRewardAddress] = await SarosFarmService.findUserPoolRewardAddress(
         payerAccount.publicKey,
         poolRewardAddress,
         sarosFarmProgramAddress
@@ -265,11 +265,13 @@ export class SarosStakeServices {
         sarosFarmProgramAddress
       );
 
-      const dataPoolReward = await SarosStakeServices.getPoolRewardData(connection, poolRewardAddress);
+      const dataPoolReward = await SarosFarmService.getPoolRewardData(connection, poolRewardAddress);
 
       const transaction = new Transaction();
 
-      if (await SolanaService.isAddressAvailable(connection, userRewardTokenAddress)) {
+      // Check if user reward token account exists, create if not
+      const userRewardTokenAccountInfo = await connection.getAccountInfo(userRewardTokenAddress);
+      if (userRewardTokenAccountInfo === null) {
         const createATAInstruction = createAssociatedTokenAccountInstruction(
           payerAccount.publicKey,
           userRewardTokenAddress,
@@ -338,19 +340,41 @@ export class SarosStakeServices {
     return PublicKey.findProgramAddress([Buffer.from('authority'), poolAddress.toBytes()], sarosFarmProgramAddress);
   }
 
+  static async getListPoolLiquidity() {
+    try {
+      const query = gql`
+        {
+          pairs {
+            id
+            fee24h
+            feeAPR
+          }
+        }
+      `;
+
+      const response = await gqlClient.request(query);
+      return get(response, 'data.pairs', []);
+    } catch (err) {
+      return [];
+    }
+  }
+
   static async getListPool({ page, size }) {
     if (page === 0) return [];
 
     try {
       const query = gql`
         {
-          stakes {
-            address
+          farms {
+            lpAddress
+            poolLpAddress
             poolAddress
-            tokenId
+            token0
+            token1
+            token0Id
+            token1Id
             rewards {
               address
-              id
               poolRewardAddress
               rewardPerBlock
             }
@@ -359,29 +383,29 @@ export class SarosStakeServices {
           }
         }
       `;
-
+      const listPoolLiquidity = await this.getListPoolLiquidity();
       const response = await gqlClient.request(query);
-      const data = get(response, 'stakes', []).map((item) => ({
-        ...item,
-        lpAddress: get(item, 'address', ''),
-      }));
+      const data = get(response, 'farms', []);
 
       const limit = parseInt(size);
       const skip = parseInt(page - 1) * limit;
-      const listStake = data.slice(skip, skip + limit);
+      const listFarm = data.slice(skip, skip + limit);
 
       const newListFarm = await Promise.all(
-        listStake.map(async (item) => {
-          const dataFarm = await SarosStakeServices.fetchDetailPoolFarm(item);
+        listFarm.map(async (item) => {
+          const dataFarm = SarosFarmService.fetchDetailPoolFarm(item);
+          const infoLiquidity = listPoolLiquidity.find((liquidity) => item.lpAddress === liquidity.id);
           return {
             ...item,
             ...dataFarm,
+            fee24h: get(infoLiquidity, 'fee24h'),
+            feeAPR: get(infoLiquidity, 'feeAPR'),
           };
         })
       );
       return newListFarm;
     } catch (err) {
-      return `Get list stake error ${JSON.stringify(err)}`;
+      return `Get list farm error ${JSON.stringify(err)}`;
     }
   }
 
@@ -397,17 +421,23 @@ export class SarosStakeServices {
 
   static async fetchDetailPoolFarm(farmParam) {
     const connection = genConnectionSolana();
-    const { tokenId, rewards, poolAddress } = farmParam;
+    const { poolLpAddress, token0Id, token1Id, rewards, lpAddress, poolAddress } = farmParam;
 
     // Fetch pool data
-    const dataPoolFarm = await SarosStakeServices.getPoolData(connection, new PublicKey(poolAddress));
+    const dataPoolFarm = await SarosFarmService.getPoolData(connection, new PublicKey(poolAddress));
     const stakingTokenAccount = get(dataPoolFarm, 'stakingTokenAccount');
     const fetchInfoAccountPool = await connection.getTokenAccountBalance(stakingTokenAccount);
     const totalStaked = get(fetchInfoAccountPool.value, 'amount', 0);
 
     // Fetch pool liquidity info
-    const stakingPrice = await getPriceBaseId(tokenId);
+    const dataPoolInfo = await this.fetchInfoPoolLpAddress(poolLpAddress, connection);
+    const amountToken0InPool = get(dataPoolInfo, 'amountToken0InPool', 0);
+    const amountToken1InPool = get(dataPoolInfo, 'amountToken1InPool', 0);
 
+    const toke0Price = await getPriceBaseId(token0Id);
+    const toke1Price = await getPriceBaseId(token1Id);
+
+    const totalPriceToken = amountToken0InPool * toke0Price + amountToken1InPool * toke1Price;
     const rewardOneYearUSD = await Promise.all(
       rewards.map(async (reward) => await this.calculateRewardOneYear(reward, connection))
     );
@@ -417,7 +447,11 @@ export class SarosStakeServices {
       return total;
     }, 0);
 
-    const liquidityUsd = stakingPrice * totalStaked;
+    const lpInfo = await getMint(connection, new PublicKey(lpAddress));
+
+    const totalSupplyLP = parseFloat(lpInfo.supply.toString());
+    const priceLp = totalPriceToken / totalSupplyLP;
+    const liquidityUsd = priceLp * totalStaked;
 
     const apr = (totalRewardOneYearUSD / liquidityUsd) * 100;
     return {
@@ -430,19 +464,13 @@ export class SarosStakeServices {
   static async fetchInfoPoolLpAddress(poolAddress, connection) {
     const newPoolAccountInfo = await getPoolInfo(connection, new PublicKey(poolAddress));
 
-    const newPoolToken0AccountInfo = await getAccount(
-      connection,
-      newPoolAccountInfo.token0Account
-    );
+    const newPoolToken0AccountInfo = await getAccount(connection, newPoolAccountInfo.token0Account);
 
     const amountToken0InPool = newPoolToken0AccountInfo.amount
       ? parseFloat(newPoolToken0AccountInfo.amount.toString())
       : 0;
 
-    const newPoolToken1AccountInfo = await getAccount(
-      connection,
-      newPoolAccountInfo.token1Account
-    );
+    const newPoolToken1AccountInfo = await getAccount(connection, newPoolAccountInfo.token1Account);
 
     const amountToken1InPool = newPoolToken1AccountInfo.amount
       ? parseFloat(newPoolToken1AccountInfo.amount.toString())
