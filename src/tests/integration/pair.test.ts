@@ -24,10 +24,7 @@ describe('SarosAMMPair Integration Tests', () => {
 
   beforeAll(async () => {
     connection = new Connection(RPC_ENDPOINT, 'confirmed');
-    pair = new SarosAMMPair(
-      { mode: MODE.MAINNET, connection },
-      TEST_POOL_ADDRESS
-    );
+    pair = new SarosAMMPair({ mode: MODE.MAINNET, connection }, TEST_POOL_ADDRESS);
 
     console.log(`Testing against BONK-SAROS pool: ${TEST_POOL_ADDRESS.toBase58()}`);
   }, 10000);
@@ -305,10 +302,7 @@ describe('SarosAMMPair Integration Tests', () => {
     }, 15000);
 
     it('should throw error when getting quote before refreshState', async () => {
-      const freshPair = new SarosAMMPair(
-        { mode: MODE.MAINNET, connection },
-        TEST_POOL_ADDRESS
-      );
+      const freshPair = new SarosAMMPair({ mode: MODE.MAINNET, connection }, TEST_POOL_ADDRESS);
 
       // Should fail because metadata is undefined
       await expect(

@@ -9,9 +9,7 @@
   "instructions": [
     {
       "name": "initialize",
-      "discriminator": [
-        0
-      ],
+      "discriminator": [0],
       "accounts": [
         {
           "name": "swap_info",
@@ -63,19 +61,14 @@
         {
           "name": "swap_calculator",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         }
       ]
     },
     {
       "name": "swap",
-      "discriminator": [
-        1
-      ],
+      "discriminator": [1],
       "accounts": [
         {
           "name": "swap_info",
@@ -131,9 +124,7 @@
     },
     {
       "name": "deposit_all_token_types",
-      "discriminator": [
-        2
-      ],
+      "discriminator": [2],
       "accounts": [
         {
           "name": "swap_info"
@@ -191,9 +182,7 @@
     },
     {
       "name": "withdraw_all_token_types",
-      "discriminator": [
-        3
-      ],
+      "discriminator": [3],
       "accounts": [
         {
           "name": "swap_info"
@@ -255,9 +244,7 @@
     },
     {
       "name": "swap_exact_out",
-      "discriminator": [
-        6
-      ],
+      "discriminator": [6],
       "accounts": [
         {
           "name": "swap_info",

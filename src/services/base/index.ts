@@ -23,17 +23,10 @@ export abstract class SarosBaseService {
     this.config = config;
     this.connection = config.connection;
 
-    const provider = new AnchorProvider(
-      this.connection,
-      {} as Wallet,
-      AnchorProvider.defaultOptions()
-    );
+    const provider = new AnchorProvider(this.connection, {} as Wallet, AnchorProvider.defaultOptions());
 
     // Create program instance
-    this.ammProgram = new Program(
-      SarosSwapIDL as SarosSwap,
-      provider
-    );
+    this.ammProgram = new Program(SarosSwapIDL as SarosSwap, provider);
   }
 
   public getDexName(): string {

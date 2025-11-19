@@ -1,33 +1,35 @@
 import { PublicKey } from '@solana/web3.js';
 
-/**
- * Derive the pool authority PDA for an AMM pair
- * @param poolAddress - The pool/pair address
- * @param programId - AMM program ID
- * @returns Pool authority address and bump seed
- */
-export function derivePoolAuthority(
+// AMM PDA derivations
+export function derivePoolAuthority(poolAddress: PublicKey, programId: PublicKey): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync([poolAddress.toBuffer()], programId);
+}
+
+export function derivePoolAddress(seed: PublicKey, programId: PublicKey): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync([seed.toBuffer()], programId);
+}
+
+// Farm/Stake PDA derivations
+export function deriveFarmUserPoolAddress(
+  user: PublicKey,
   poolAddress: PublicKey,
   programId: PublicKey
 ): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync(
-    [poolAddress.toBuffer()],
-    programId
-  );
+  return PublicKey.findProgramAddressSync([user.toBuffer(), poolAddress.toBuffer()], programId);
 }
 
-/**
- * Derive a pool address from a seed
- * @param seed - Seed public key
- * @param programId - AMM program ID
- * @returns Pool address and bump seed
- */
-export function derivePoolAddress(
-  seed: PublicKey,
+export function deriveFarmUserPoolRewardAddress(
+  user: PublicKey,
+  poolReward: PublicKey,
   programId: PublicKey
 ): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync(
-    [seed.toBuffer()],
-    programId
-  );
+  return PublicKey.findProgramAddressSync([user.toBuffer(), poolReward.toBuffer()], programId);
+}
+
+export function deriveFarmPoolAuthority(poolAddress: PublicKey, programId: PublicKey): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync([Buffer.from('authority'), poolAddress.toBuffer()], programId);
+}
+
+export function deriveFarmPoolRewardAuthority(poolReward: PublicKey, programId: PublicKey): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync([Buffer.from('authority'), poolReward.toBuffer()], programId);
 }

@@ -1,7 +1,7 @@
 import { SarosAMMError } from './errors';
 
 export function fromBaseUnit(value: string | number | bigint, decimals: number = 9): string {
-      const valueStr = String(value);
+  const valueStr = String(value);
 
   try {
     if (parseFloat(valueStr) === 0) return '0';

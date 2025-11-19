@@ -11,11 +11,7 @@ import {
   SwapCurveType,
   FeeMetadata,
 } from '../types';
-import {
-  calculateSwapOutput,
-  calculatePriceImpact,
-  getMinOutputWithSlippage,
-} from '../utils/calculations';
+import { calculateSwapOutput, calculatePriceImpact, getMinOutputWithSlippage } from '../utils/calculations';
 import { derivePoolAuthority } from '../utils/pda';
 import { SarosAMMError } from '../utils/errors';
 import { decodePairAccount } from '../utils/legacyAccountDecoder';
@@ -66,10 +62,7 @@ export class SarosAMMPair extends SarosBaseService {
       }
 
       // Derive pool authority
-      const [authority] = derivePoolAuthority(
-        this.pairAddress,
-        this.ammProgram.programId
-      );
+      const [authority] = derivePoolAuthority(this.pairAddress, this.ammProgram.programId);
       this.poolAuthority = authority;
 
       this.metadata = await this.buildPairMetadata();
@@ -101,8 +94,7 @@ export class SarosAMMPair extends SarosBaseService {
       const reserveOut = swapForY ? tokenY.reserve : tokenX.reserve;
 
       // Calculate output
-      const { tradeFeeNumerator, tradeFeeDenominator } =
-        this.pairAccount.fees;
+      const { tradeFeeNumerator, tradeFeeDenominator } = this.pairAccount.fees;
 
       const amountOut = calculateSwapOutput(
         amount,
@@ -116,12 +108,7 @@ export class SarosAMMPair extends SarosBaseService {
       const minAmountOut = getMinOutputWithSlippage(amountOut, slippage);
 
       // Calculate price impact
-      const priceImpact = calculatePriceImpact(
-        amount,
-        amountOut,
-        reserveIn,
-        reserveOut
-      );
+      const priceImpact = calculatePriceImpact(amount, amountOut, reserveIn, reserveOut);
 
       // Calculate rate
       const rate = Number(amountOut) / Number(amount);
@@ -165,17 +152,12 @@ export class SarosAMMPair extends SarosBaseService {
 
     const tx = transaction || new Transaction();
 
-    const { tokenAMint, tokenBMint, tokenA, tokenB, poolMint } =
-      this.pairAccount;
+    const { tokenAMint, tokenBMint, tokenA, tokenB, poolMint } = this.pairAccount;
 
     // Get or create user token accounts
-    const userTokenA =
-      params.userTokenX ||
-      (await spl.getAssociatedTokenAddress(tokenAMint, payer, true));
+    const userTokenA = params.userTokenX || (await spl.getAssociatedTokenAddress(tokenAMint, payer, true));
 
-    const userTokenB =
-      params.userTokenY ||
-      (await spl.getAssociatedTokenAddress(tokenBMint, payer, true));
+    const userTokenB = params.userTokenY || (await spl.getAssociatedTokenAddress(tokenBMint, payer, true));
 
     // Determine source and destination based on swap direction
     const [sourceToken, destToken, poolSource, poolDest] = swapForY
@@ -209,16 +191,7 @@ export class SarosAMMPair extends SarosBaseService {
   // -----------------------------------------------------------------------------
 
   private async buildPairMetadata(): Promise<PairMetadata> {
-    const {
-      tokenAMint,
-      tokenBMint,
-      tokenA,
-      tokenB,
-      poolMint,
-      poolFeeAccount,
-      fees,
-      swapCurve,
-    } = this.pairAccount;
+    const { tokenAMint, tokenBMint, tokenA, tokenB, poolMint, poolFeeAccount, fees, swapCurve } = this.pairAccount;
 
     // Fetch token account data for reserves
     const [tokenAInfo, tokenBInfo] = await Promise.all([
@@ -226,12 +199,8 @@ export class SarosAMMPair extends SarosBaseService {
       this.connection.getAccountInfo(tokenB),
     ]);
 
-    const tokenAData = tokenAInfo
-      ? spl.AccountLayout.decode(tokenAInfo.data)
-      : null;
-    const tokenBData = tokenBInfo
-      ? spl.AccountLayout.decode(tokenBInfo.data)
-      : null;
+    const tokenAData = tokenAInfo ? spl.AccountLayout.decode(tokenAInfo.data) : null;
+    const tokenBData = tokenBInfo ? spl.AccountLayout.decode(tokenBInfo.data) : null;
 
     // Fetch mint info for decimals
     const [mintAInfo, mintBInfo] = await Promise.all([

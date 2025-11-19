@@ -95,10 +95,7 @@ interface SarosAPIResponse<T> {
  * Saros API client with automatic fallback handling
  */
 export class SarosAPIService {
-  private static async fetchWithFallback<T>(
-    url: string,
-    timeoutMs: number = 5000
-  ): Promise<T[] | null> {
+  private static async fetchWithFallback<T>(url: string, timeoutMs: number = 5000): Promise<T[] | null> {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -106,7 +103,7 @@ export class SarosAPIService {
       const response = await fetch(url, {
         signal: controller.signal,
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
       });
 
@@ -138,10 +135,7 @@ export class SarosAPIService {
    * Fetch all farm information from Saros API
    * Returns null if API is unavailable
    */
-  static async getFarmInfo(
-    page: number = 1,
-    size: number = 100
-  ): Promise<SarosAPIFarmInfo[] | null> {
+  static async getFarmInfo(page: number = 1, size: number = 100): Promise<SarosAPIFarmInfo[] | null> {
     const url = `${SAROS_API_BASE}/information?page=${page}&size=${size}&type=farm`;
     return this.fetchWithFallback<SarosAPIFarmInfo>(url);
   }
@@ -150,10 +144,7 @@ export class SarosAPIService {
    * Fetch all stake information from Saros API
    * Returns null if API is unavailable
    */
-  static async getStakeInfo(
-    page: number = 1,
-    size: number = 100
-  ): Promise<SarosAPIStakeInfo[] | null> {
+  static async getStakeInfo(page: number = 1, size: number = 100): Promise<SarosAPIStakeInfo[] | null> {
     const url = `${SAROS_API_BASE}/information?page=${page}&size=${size}&type=stake`;
     return this.fetchWithFallback<SarosAPIStakeInfo>(url);
   }
@@ -166,7 +157,7 @@ export class SarosAPIService {
     const farms = await this.getFarmInfo();
     if (!farms) return null;
 
-    return farms.find(farm => farm.poolAddress === poolAddress) || null;
+    return farms.find((farm) => farm.poolAddress === poolAddress) || null;
   }
 
   /**
@@ -177,6 +168,6 @@ export class SarosAPIService {
     const stakes = await this.getStakeInfo();
     if (!stakes) return null;
 
-    return stakes.find(stake => stake.poolAddress === poolAddress) || null;
+    return stakes.find((stake) => stake.poolAddress === poolAddress) || null;
   }
 }

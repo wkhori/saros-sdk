@@ -43,11 +43,7 @@ export enum SwapCurveType {
   Offset = 'Offset',
 }
 
-export type SwapCurve =
-  | { constantProduct: {} }
-  | { constantPrice: {} }
-  | { stable: {} }
-  | { offset: {} };
+export type SwapCurve = { constantProduct: {} } | { constantPrice: {} } | { stable: {} } | { offset: {} };
 
 /**
  * Pair metadata (includes current state + derived data)

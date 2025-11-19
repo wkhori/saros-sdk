@@ -8,6 +8,8 @@ export enum SarosAMMErrorCode {
   InvalidSlippage = 'INVALID_SLIPPAGE',
   InsufficientLiquidity = 'INSUFFICIENT_LIQUIDITY',
   InvalidTokenAccount = 'INVALID_TOKEN_ACCOUNT',
+  PoolNotInitialized = 'POOL_NOT_INITIALIZED',
+  PoolFetchFailed = 'POOL_FETCH_FAILED',
 }
 
 export class SarosAMMError extends Error {
@@ -30,45 +32,35 @@ export class SarosAMMError extends Error {
   }
 
   static PairNotInitialized(): SarosAMMError {
-    return new SarosAMMError(
-      'Pair is not initialized',
-      SarosAMMErrorCode.PairNotInitialized
-    );
+    return new SarosAMMError('Pair is not initialized', SarosAMMErrorCode.PairNotInitialized);
   }
 
   static PairFetchFailed(): SarosAMMError {
-    return new SarosAMMError(
-      'Failed to fetch pair account',
-      SarosAMMErrorCode.PairFetchFailed
-    );
+    return new SarosAMMError('Failed to fetch pair account', SarosAMMErrorCode.PairFetchFailed);
   }
 
   static QuoteCalculationFailed(): SarosAMMError {
-    return new SarosAMMError(
-      'Failed to calculate quote',
-      SarosAMMErrorCode.QuoteCalculationFailed
-    );
+    return new SarosAMMError('Failed to calculate quote', SarosAMMErrorCode.QuoteCalculationFailed);
   }
 
   static ZeroAmount(): SarosAMMError {
-    return new SarosAMMError(
-      'Amount must be greater than zero',
-      SarosAMMErrorCode.ZeroAmount
-    );
+    return new SarosAMMError('Amount must be greater than zero', SarosAMMErrorCode.ZeroAmount);
   }
 
   static InvalidSlippage(): SarosAMMError {
-    return new SarosAMMError(
-      'Slippage must be between 0 and 100',
-      SarosAMMErrorCode.InvalidSlippage
-    );
+    return new SarosAMMError('Slippage must be between 0 and 100', SarosAMMErrorCode.InvalidSlippage);
   }
 
   static InsufficientLiquidity(): SarosAMMError {
-    return new SarosAMMError(
-      'Insufficient liquidity in pool',
-      SarosAMMErrorCode.InsufficientLiquidity
-    );
+    return new SarosAMMError('Insufficient liquidity in pool', SarosAMMErrorCode.InsufficientLiquidity);
+  }
+
+  static PoolNotInitialized(): SarosAMMError {
+    return new SarosAMMError('Pool state not loaded. Call refreshState() first', SarosAMMErrorCode.PoolNotInitialized);
+  }
+
+  static PoolFetchFailed(poolType: string = 'pool'): SarosAMMError {
+    return new SarosAMMError(`Failed to refresh ${poolType} state`, SarosAMMErrorCode.PoolFetchFailed);
   }
 
   static handleError(error: any, fallback: SarosAMMError): never {

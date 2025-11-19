@@ -16,7 +16,7 @@ export function calculateSwapOutput(
   const feeMultiplier = tradeFeeDenominator - tradeFeeNumerator;
   const amountInWithFee = amountIn * feeMultiplier;
   const numerator = amountInWithFee * reserveOut;
-  const denominator = (reserveIn * tradeFeeDenominator) + amountInWithFee;
+  const denominator = reserveIn * tradeFeeDenominator + amountInWithFee;
 
   return numerator / denominator;
 }
@@ -45,10 +45,7 @@ export function calculatePriceImpact(
 /**
  * Apply slippage to get minimum output
  */
-export function getMinOutputWithSlippage(
-  amount: bigint,
-  slippagePercent: number
-): bigint {
+export function getMinOutputWithSlippage(amount: bigint, slippagePercent: number): bigint {
   const slippageBps = BigInt(Math.floor(slippagePercent * 100));
   return (amount * (10000n - slippageBps)) / 10000n;
 }
