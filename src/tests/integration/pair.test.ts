@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { SarosAMMPair, MODE } from '../../index';
+import { MODE, SarosAMMPair } from '../../index';
 
 /**
  * Integration tests for SarosAMMPair

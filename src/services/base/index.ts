@@ -1,13 +1,8 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { AnchorProvider, Program, Wallet } from '@coral-xyz/anchor';
+import { AMM_PROGRAM_IDS, MODE } from '../../constants';
 import SarosSwapIDL from '../../constants/amm_idl.json';
-import type { SarosSwap } from '../../constants/amm_idl';
-
-export enum MODE {
-  MAINNET = 'mainnet-beta',
-  DEVNET = 'devnet',
-  TESTNET = 'testnet',
-}
+import type { SarosSwap } from '../../constants';
 
 export interface SarosAMMConfig {
   mode: MODE;
@@ -25,8 +20,11 @@ export abstract class SarosBaseService {
 
     const provider = new AnchorProvider(this.connection, {} as Wallet, AnchorProvider.defaultOptions());
 
-    // Create program instance
-    this.ammProgram = new Program(SarosSwapIDL as SarosSwap, provider);
+    // Get program ID for the specified network
+    const programId = AMM_PROGRAM_IDS[config.mode];
+
+    // Create program instanceusing mainnet IDL and network-specific program ID
+    this.ammProgram = new Program({ ...SarosSwapIDL, address: programId.toBase58() } as SarosSwap, provider);
   }
 
   public getDexName(): string {

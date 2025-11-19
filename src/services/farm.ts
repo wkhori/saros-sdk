@@ -1,7 +1,7 @@
 import { Connection, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
 import { AnchorProvider, Program, Wallet, BN } from '@coral-xyz/anchor';
 import * as spl from '@solana/spl-token';
-import { FARM_IDL } from '../constants/farm_idl';
+import { FARM_PROGRAM_IDS, MODE, FARM_IDL } from '../constants';
 import { SarosAPIService, type SarosAPIFarmInfo, type SarosAPIStakeInfo } from './api';
 import { SarosAMMError } from '../utils/errors';
 import {
@@ -12,12 +12,12 @@ import {
 } from '../utils/pda';
 import type { PoolAccount, StakeParams, UnstakeParams, ClaimRewardParams, UserPosition } from '../types/farm';
 
-export enum MODE {
-  MAINNET = 'mainnet-beta',
-  DEVNET = 'devnet',
-  TESTNET = 'testnet',
-}
-
+/**
+ * Pool type for API filtering only.
+ * On-chain, both farm and stake use the same Pool account structure.
+ * - 'farm': LP token staking pools (from /api/saros/information?type=farm)
+ * - 'stake': Single token staking pools (from /api/saros/information?type=stake)
+ */
 export type PoolType = 'farm' | 'stake';
 
 export interface SarosFarmConfig {
@@ -69,7 +69,12 @@ export class SarosFarm {
 
     const provider = new AnchorProvider(this.connection, {} as Wallet, AnchorProvider.defaultOptions());
 
-    this.program = new Program(FARM_IDL as any, provider);
+    // Get program ID for the specified network
+    const programId = FARM_PROGRAM_IDS[config.mode];
+
+    // Create program instance with network-specific program ID
+    // Note: We use the IDL from mainnet but override the program ID for devnet
+    this.program = new Program({ ...FARM_IDL, address: programId.toBase58() } as any, provider);
   }
 
   /**
