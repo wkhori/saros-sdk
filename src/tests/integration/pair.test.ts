@@ -1,17 +1,8 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { MODE, SarosAMMPair } from '../../index';
+import { MODE } from '../../constants/config';
+import { SarosAMMPair } from '../../services/pair';
 
-/**
- * Integration tests for SarosAMMPair
- *
- * These tests run against mainnet to verify the SDK works correctly.
- * We use a read-only connection and don't submit any transactions.
- *
- * Testing against: BONK-SAROS pool on mainnet
- */
-
-// BONK-SAROS pool on mainnet
 const TEST_POOL_ADDRESS = new PublicKey('HmQL6eECoaGLWvTxz6cWT3jEsPfjdin2vNVJ1xKiwjXz');
 
 // Use mainnet for integration tests

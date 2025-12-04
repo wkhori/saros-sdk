@@ -1,7 +1,8 @@
 import { Connection, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
 import { AnchorProvider, Program, Wallet, BN } from '@coral-xyz/anchor';
 import * as spl from '@solana/spl-token';
-import { FARM_PROGRAM_IDS, MODE, FARM_IDL } from '../constants';
+import { FARM_PROGRAM_IDS, MODE } from '../constants/config';
+import { FARM_IDL } from '../constants/idl/farm';
 import { SarosAPIService, type SarosAPIFarmInfo, type SarosAPIStakeInfo } from './api';
 import { SarosAMMError } from '../utils/errors';
 import {
@@ -54,12 +55,20 @@ export interface SarosFarmConfig {
 export class SarosFarm {
   private config: SarosFarmConfig;
   private connection: Connection;
-  private program: Program;
+  private farmProgram!: Program;
   private poolAddress: PublicKey;
   private poolType: PoolType;
 
   private poolAccount?: PoolAccount;
   private apiInfo?: SarosAPIFarmInfo | SarosAPIStakeInfo;
+
+  /**
+   * Typed accessor for program accounts
+   * Using 'as any' because Farm IDL uses legacy format
+   */
+  private get accounts() {
+    return this.farmProgram.account as any;
+  }
 
   constructor(config: SarosFarmConfig, poolAddress: PublicKey, poolType: PoolType = 'farm') {
     this.config = config;
@@ -74,7 +83,8 @@ export class SarosFarm {
 
     // Create program instance with network-specific program ID
     // Note: We use the IDL from mainnet but override the program ID for devnet
-    this.program = new Program({ ...FARM_IDL, address: programId.toBase58() } as any, provider);
+    // Using 'as any' because Farm IDL uses legacy format without discriminators
+    this.farmProgram = new Program({ ...FARM_IDL, address: programId.toBase58() } as any, provider);
   }
 
   /**
@@ -83,7 +93,7 @@ export class SarosFarm {
   public async refreshState(): Promise<void> {
     try {
       // Fetch on-chain pool account
-      const poolAccountData = await (this.program.account as any).pool.fetch(this.poolAddress);
+      const poolAccountData = await this.accounts.pool.fetch(this.poolAddress);
 
       this.poolAccount = {
         nonce: poolAccountData.nonce,
@@ -134,7 +144,7 @@ export class SarosFarm {
     const transaction = new Transaction();
 
     // Derive user pool address
-    const [userPoolAddress, userPoolNonce] = deriveFarmUserPoolAddress(payer, this.poolAddress, this.program.programId);
+    const [userPoolAddress, userPoolNonce] = deriveFarmUserPoolAddress(payer, this.poolAddress, this.farmProgram.programId);
 
     // Derive or use provided user staking token account
     const userStakingTokenAccount =
@@ -143,7 +153,7 @@ export class SarosFarm {
     // Check if user pool account exists, create if not
     const userPoolAccountInfo = await this.connection.getAccountInfo(userPoolAddress);
     if (!userPoolAccountInfo) {
-      const createUserPoolIx = await this.program.methods
+      const createUserPoolIx = await this.farmProgram.methods
         .createUserPool(userPoolNonce)
         .accounts({
           user: payer,
@@ -157,7 +167,7 @@ export class SarosFarm {
     }
 
     // Create stake pool instruction
-    const stakeIx = await this.program.methods
+    const stakeIx = await this.farmProgram.methods
       .stakePool(new BN(amount.toString()))
       .accounts({
         pool: this.poolAddress,
@@ -178,13 +188,13 @@ export class SarosFarm {
         const [userPoolRewardAddress, userPoolRewardNonce] = deriveFarmUserPoolRewardAddress(
           payer,
           poolRewardAddress,
-          this.program.programId
+          this.farmProgram.programId
         );
 
         // Check if user pool reward exists, create if not
         const userPoolRewardInfo = await this.connection.getAccountInfo(userPoolRewardAddress);
         if (!userPoolRewardInfo) {
-          const createUserPoolRewardIx = await this.program.methods
+          const createUserPoolRewardIx = await this.farmProgram.methods
             .createUserPoolReward(userPoolRewardNonce)
             .accounts({
               user: payer,
@@ -198,7 +208,7 @@ export class SarosFarm {
         }
 
         // Stake pool reward
-        const stakePoolRewardIx = await this.program.methods
+        const stakePoolRewardIx = await this.farmProgram.methods
           .stakePoolReward()
           .accounts({
             pool: this.poolAddress,
@@ -230,8 +240,8 @@ export class SarosFarm {
     const transaction = new Transaction();
 
     // Derive addresses
-    const [userPoolAddress] = deriveFarmUserPoolAddress(payer, this.poolAddress, this.program.programId);
-    const [poolAuthority] = deriveFarmPoolAuthority(this.poolAddress, this.program.programId);
+    const [userPoolAddress] = deriveFarmUserPoolAddress(payer, this.poolAddress, this.farmProgram.programId);
+    const [poolAuthority] = deriveFarmPoolAuthority(this.poolAddress, this.farmProgram.programId);
 
     const userStakingTokenAccount =
       params.userStakingTokenAccount || (await spl.getAssociatedTokenAddress(this.poolAccount.stakingTokenMint, payer));
@@ -243,10 +253,10 @@ export class SarosFarm {
         const [userPoolRewardAddress] = deriveFarmUserPoolRewardAddress(
           payer,
           poolRewardAddress,
-          this.program.programId
+          this.farmProgram.programId
         );
 
-        const unstakePoolRewardIx = await this.program.methods
+        const unstakePoolRewardIx = await this.farmProgram.methods
           .unstakePoolReward()
           .accounts({
             pool: this.poolAddress,
@@ -262,7 +272,7 @@ export class SarosFarm {
     }
 
     // Unstake pool
-    const unstakeIx = await this.program.methods
+    const unstakeIx = await this.farmProgram.methods
       .unstakePool(new BN(amount.toString()))
       .accounts({
         pool: this.poolAddress,
@@ -290,11 +300,11 @@ export class SarosFarm {
     const transaction = new Transaction();
 
     // Fetch pool reward to get reward token mint
-    const poolRewardAccount = await (this.program.account as any).poolReward.fetch(poolRewardAddress);
+    const poolRewardAccount = await this.accounts.poolReward.fetch(poolRewardAddress);
 
     // Derive addresses
-    const [userPoolRewardAddress] = deriveFarmUserPoolRewardAddress(payer, poolRewardAddress, this.program.programId);
-    const [poolRewardAuthority] = deriveFarmPoolRewardAuthority(poolRewardAddress, this.program.programId);
+    const [userPoolRewardAddress] = deriveFarmUserPoolRewardAddress(payer, poolRewardAddress, this.farmProgram.programId);
+    const [poolRewardAuthority] = deriveFarmPoolRewardAuthority(poolRewardAddress, this.farmProgram.programId);
 
     const userRewardTokenAccount =
       params.userRewardTokenAccount || (await spl.getAssociatedTokenAddress(poolRewardAccount.rewardTokenMint, payer));
@@ -312,7 +322,7 @@ export class SarosFarm {
     }
 
     // Claim reward
-    const claimIx = await this.program.methods
+    const claimIx = await this.farmProgram.methods
       .claimReward()
       .accounts({
         poolReward: poolRewardAddress,
@@ -334,9 +344,9 @@ export class SarosFarm {
    * Get user's staking position
    */
   public async getUserPosition(user: PublicKey): Promise<UserPosition> {
-    const [userPoolAddress] = deriveFarmUserPoolAddress(user, this.poolAddress, this.program.programId);
+    const [userPoolAddress] = deriveFarmUserPoolAddress(user, this.poolAddress, this.farmProgram.programId);
 
-    const userPoolAccount = await (this.program.account as any).userPool.fetch(userPoolAddress);
+    const userPoolAccount = await this.accounts.userPool.fetch(userPoolAddress);
 
     const rewards = [];
     if (this.apiInfo?.rewards) {
@@ -345,11 +355,11 @@ export class SarosFarm {
         const [userPoolRewardAddress] = deriveFarmUserPoolRewardAddress(
           user,
           poolRewardAddress,
-          this.program.programId
+          this.farmProgram.programId
         );
 
         try {
-          const userPoolRewardAccount = await (this.program.account as any).userPoolReward.fetch(userPoolRewardAddress);
+          const userPoolRewardAccount = await this.accounts.userPoolReward.fetch(userPoolRewardAddress);
 
           rewards.push({
             poolRewardAddress,
