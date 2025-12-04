@@ -1,5 +1,5 @@
 import { BN } from '@coral-xyz/anchor';
-import { PublicKey, Transaction } from '@solana/web3.js';
+import { Keypair, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import * as spl from '@solana/spl-token';
 import { SarosBaseService, SarosAMMConfig } from './base';
 import {
@@ -10,11 +10,14 @@ import {
   SwapParams,
   SwapCurveType,
   FeeMetadata,
+  CreatePairParams,
+  CreatePairResult,
 } from '../types';
 import { calculateSwapOutput, calculatePriceImpact, getMinOutputWithSlippage } from '../utils/calculations';
 import { derivePoolAuthority } from '../utils/pda';
 import { SarosAMMError } from '../utils/errors';
 import { decodePairAccount } from '../utils/legacyAccountDecoder';
+import { POOL_ACCOUNT_SIZE, MINT_ACCOUNT_SIZE, DEFAULT_FEES } from '../constants/config';
 
 export class SarosAMMPair extends SarosBaseService {
   private pairAddress: PublicKey;
@@ -26,6 +29,195 @@ export class SarosAMMPair extends SarosBaseService {
   constructor(config: SarosAMMConfig, pairAddress: PublicKey) {
     super(config);
     this.pairAddress = pairAddress;
+  }
+
+  /**
+   * Create a new AMM liquidity pair
+   *
+   * @example
+   * ```typescript
+   * const pair = new SarosAMMPair({ mode: MODE.DEVNET, connection }, PublicKey.default);
+   * const result = await pair.createPair({
+   *   payer: wallet.publicKey,
+   *   feeOwner: wallet.publicKey,
+   *   tokenAMint: tokenA.mint,
+   *   tokenBMint: tokenB.mint,
+   *   initialTokenAAmount: 1_000_000_000n,
+   *   initialTokenBAmount: 1_000_000n,
+   *   curveType: SwapCurveType.ConstantProduct
+   * });
+   *
+   * await connection.sendTransaction(result.transaction, [
+   *   wallet,
+   *   result.pairKeypair,
+   *   result.lpMintKeypair
+   * ]);
+   * ```
+   */
+  public async createPair(params: CreatePairParams): Promise<CreatePairResult> {
+    const {
+      payer,
+      feeOwner,
+      tokenAMint,
+      tokenBMint,
+      initialTokenAAmount,
+      initialTokenBAmount,
+      curveType,
+      curveParameters = Buffer.alloc(32),
+    } = params;
+
+    if (initialTokenAAmount <= 0n) throw SarosAMMError.ZeroAmount();
+    if (initialTokenBAmount <= 0n) throw SarosAMMError.ZeroAmount();
+
+    try {
+      const tx = new Transaction();
+
+      // Generate pair account and LP mint keypairs from seeds
+      const pairSeed = Keypair.generate();
+      const [pairAuthority] = derivePoolAuthority(pairSeed.publicKey, this.ammProgram.programId);
+      const authorityBytes = pairAuthority.toBytes();
+      const lpMintKeypair = Keypair.fromSeed(authorityBytes.slice(0, 32));
+
+      // Get or create token accounts for pool authority
+      const poolTokenAAccount = spl.getAssociatedTokenAddressSync(tokenAMint, pairAuthority, true);
+      const poolTokenBAccount = spl.getAssociatedTokenAddressSync(tokenBMint, pairAuthority, true);
+
+      // Create associated token accounts if they don't exist
+      const poolTokenAInfo = await this.connection.getAccountInfo(poolTokenAAccount);
+      if (!poolTokenAInfo) {
+        tx.add(
+          spl.createAssociatedTokenAccountInstruction(payer, poolTokenAAccount, pairAuthority, tokenAMint)
+        );
+      }
+
+      const poolTokenBInfo = await this.connection.getAccountInfo(poolTokenBAccount);
+      if (!poolTokenBInfo) {
+        tx.add(
+          spl.createAssociatedTokenAccountInstruction(payer, poolTokenBAccount, pairAuthority, tokenBMint)
+        );
+      }
+
+      // User's token accounts
+      const userTokenAAccount = spl.getAssociatedTokenAddressSync(tokenAMint, payer);
+      const userTokenBAccount = spl.getAssociatedTokenAddressSync(tokenBMint, payer);
+
+      // User's LP token account
+      const userLpTokenAccount = spl.getAssociatedTokenAddressSync(lpMintKeypair.publicKey, payer);
+      const userLpInfo = await this.connection.getAccountInfo(userLpTokenAccount);
+      if (!userLpInfo) {
+        tx.add(
+          spl.createAssociatedTokenAccountInstruction(payer, userLpTokenAccount, payer, lpMintKeypair.publicKey)
+        );
+      }
+
+      // Fee owner's LP token account
+      const feeLpTokenAccount = spl.getAssociatedTokenAddressSync(lpMintKeypair.publicKey, feeOwner);
+      if (!payer.equals(feeOwner)) {
+        const feeLpInfo = await this.connection.getAccountInfo(feeLpTokenAccount);
+        if (!feeLpInfo) {
+          tx.add(
+            spl.createAssociatedTokenAccountInstruction(payer, feeLpTokenAccount, feeOwner, lpMintKeypair.publicKey)
+          );
+        }
+      }
+
+      // Transfer initial liquidity from user to pool
+      tx.add(
+        spl.createTransferInstruction(userTokenAAccount, poolTokenAAccount, payer, initialTokenAAmount)
+      );
+      tx.add(
+        spl.createTransferInstruction(userTokenBAccount, poolTokenBAccount, payer, initialTokenBAmount)
+      );
+
+      // Create LP mint account
+      const mintRent = await this.connection.getMinimumBalanceForRentExemption(MINT_ACCOUNT_SIZE);
+      tx.add(
+        SystemProgram.createAccount({
+          fromPubkey: payer,
+          newAccountPubkey: lpMintKeypair.publicKey,
+          lamports: mintRent,
+          space: MINT_ACCOUNT_SIZE,
+          programId: spl.TOKEN_PROGRAM_ID,
+        })
+      );
+
+      // Initialize LP mint
+      tx.add(
+        spl.createInitializeMint2Instruction(lpMintKeypair.publicKey, 9, pairAuthority, null, spl.TOKEN_PROGRAM_ID)
+      );
+
+      // Create pair account
+      const pairRent = await this.connection.getMinimumBalanceForRentExemption(POOL_ACCOUNT_SIZE);
+      tx.add(
+        SystemProgram.createAccount({
+          fromPubkey: payer,
+          newAccountPubkey: pairSeed.publicKey,
+          lamports: pairRent,
+          space: POOL_ACCOUNT_SIZE,
+          programId: this.ammProgram.programId,
+        })
+      );
+
+      // Encode curve type
+      let curveData: any;
+      switch (curveType) {
+        case SwapCurveType.ConstantProduct:
+          curveData = { constantProduct: {} };
+          break;
+        case SwapCurveType.ConstantPrice:
+          curveData = { constantPrice: {} };
+          break;
+        case SwapCurveType.Stable:
+          curveData = { stable: {} };
+          break;
+        case SwapCurveType.Offset:
+          curveData = { offset: {} };
+          break;
+        default:
+          curveData = { constantProduct: {} };
+      }
+
+      // Initialize pair instruction
+      const initIx = await this.ammProgram.methods
+        .initialize(
+          {
+            tradeFeeNumerator: new BN(DEFAULT_FEES.tradingFeeNumerator.toString()),
+            tradeFeeDenominator: new BN(DEFAULT_FEES.tradeFeeDenominator.toString()),
+            ownerTradeFeeNumerator: new BN(DEFAULT_FEES.ownerTradingFeeNumerator.toString()),
+            ownerTradeFeeDenominator: new BN(DEFAULT_FEES.ownerTradingFeeDenominator.toString()),
+            ownerWithdrawFeeNumerator: new BN(DEFAULT_FEES.ownerWithdrawFeeNumerator.toString()),
+            ownerWithdrawFeeDenominator: new BN(DEFAULT_FEES.ownerWithdrawFeeDenominator.toString()),
+            hostFeeNumerator: new BN(DEFAULT_FEES.hostFeeNumerator.toString()),
+            hostFeeDenominator: new BN(DEFAULT_FEES.hostFeeDenominator.toString()),
+          },
+          curveData,
+          Array.from(curveParameters)
+        )
+        .accountsPartial({
+          swapInfo: pairSeed.publicKey,
+          authorityInfo: pairAuthority,
+          tokenAInfo: poolTokenAAccount,
+          tokenBInfo: poolTokenBAccount,
+          poolMintInfo: lpMintKeypair.publicKey,
+          feeAccountInfo: feeLpTokenAccount,
+          destinationInfo: userLpTokenAccount,
+          tokenProgramInfo: spl.TOKEN_PROGRAM_ID,
+        })
+        .instruction();
+
+      tx.add(initIx);
+
+      return {
+        transaction: tx,
+        pairKeypair: pairSeed,
+        lpMintKeypair,
+        pairAddress: pairSeed.publicKey,
+        lpTokenMint: lpMintKeypair.publicKey,
+        pairAuthority,
+      };
+    } catch (error) {
+      SarosAMMError.handleError(error, SarosAMMError.PairCreationFailed());
+    }
   }
 
   /** Get pair metadata */

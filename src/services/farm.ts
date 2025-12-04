@@ -81,9 +81,7 @@ export class SarosFarm {
     // Get program ID for the specified network
     const programId = FARM_PROGRAM_IDS[config.mode];
 
-    // Create program instance with network-specific program ID
-    // Note: We use the IDL from mainnet but override the program ID for devnet
-    // Using 'as any' because Farm IDL uses legacy format without discriminators
+    // Create program instance with network-specific program ID and shared IDL from mainnet
     this.farmProgram = new Program({ ...FARM_IDL, address: programId.toBase58() } as any, provider);
   }
 

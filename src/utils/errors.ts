@@ -3,6 +3,7 @@ export enum SarosAMMErrorCode {
   InvalidDecimals = 'INVALID_DECIMALS',
   PairNotInitialized = 'PAIR_NOT_INITIALIZED',
   PairFetchFailed = 'PAIR_FETCH_FAILED',
+  PairCreationFailed = 'PAIR_CREATION_FAILED',
   QuoteCalculationFailed = 'QUOTE_CALCULATION_FAILED',
   ZeroAmount = 'ZERO_AMOUNT',
   InvalidSlippage = 'INVALID_SLIPPAGE',
@@ -37,6 +38,10 @@ export class SarosAMMError extends Error {
 
   static PairFetchFailed(): SarosAMMError {
     return new SarosAMMError('Failed to fetch pair account', SarosAMMErrorCode.PairFetchFailed);
+  }
+
+  static PairCreationFailed(): SarosAMMError {
+    return new SarosAMMError('Failed to create pair', SarosAMMErrorCode.PairCreationFailed);
   }
 
   static QuoteCalculationFailed(): SarosAMMError {

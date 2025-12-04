@@ -1,4 +1,4 @@
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Transaction, Keypair } from '@solana/web3.js';
 import type { BN } from '@coral-xyz/anchor';
 
 /**
@@ -69,4 +69,80 @@ export interface FeeMetadata {
   ownerTradeFee: number;
   ownerWithdrawFee: number;
   hostFee: number;
+}
+
+/**
+ * Parameters for creating a new AMM pair
+ */
+export interface CreatePairParams {
+  /** Payer and initial liquidity provider */
+  payer: PublicKey;
+  /** Fee recipient address */
+  feeOwner: PublicKey;
+  /** Token A mint address */
+  tokenAMint: PublicKey;
+  /** Token B mint address */
+  tokenBMint: PublicKey;
+  /** Initial amount of token A to deposit */
+  initialTokenAAmount: bigint;
+  /** Initial amount of token B to deposit */
+  initialTokenBAmount: bigint;
+  /** Swap curve type (ConstantProduct, Stable, etc.) */
+  curveType: SwapCurveType;
+  /** Optional curve parameters (32 bytes) */
+  curveParameters?: Buffer;
+}
+
+/**
+ * Result from pair creation
+ */
+export interface CreatePairResult {
+  /** Transaction to create the pair */
+  transaction: Transaction;
+  /** Pair account keypair (signer required) */
+  pairKeypair: Keypair;
+  /** LP token mint keypair (signer required) */
+  lpMintKeypair: Keypair;
+  /** Pair address */
+  pairAddress: PublicKey;
+  /** LP token mint address */
+  lpTokenMint: PublicKey;
+  /** Pair authority PDA */
+  pairAuthority: PublicKey;
+}
+
+/**
+ * Parameters for adding liquidity to a pool
+ */
+export interface AddLiquidityParams {
+  /** Payer and liquidity provider */
+  payer: PublicKey;
+  /** Desired amount of LP tokens to receive */
+  poolTokenAmount: bigint;
+  /** Maximum amount of token A willing to deposit (slippage protection) */
+  maximumTokenAAmount: bigint;
+  /** Maximum amount of token B willing to deposit (slippage protection) */
+  maximumTokenBAmount: bigint;
+  /** Optional: User's token A account (will derive ATA if not provided) */
+  userTokenAAccount?: PublicKey;
+  /** Optional: User's token B account (will derive ATA if not provided) */
+  userTokenBAccount?: PublicKey;
+}
+
+/**
+ * Parameters for removing liquidity from a pool
+ */
+export interface RemoveLiquidityParams {
+  /** Payer and liquidity provider */
+  payer: PublicKey;
+  /** Amount of LP tokens to burn */
+  poolTokenAmount: bigint;
+  /** Minimum amount of token A to receive (slippage protection) */
+  minimumTokenAAmount: bigint;
+  /** Minimum amount of token B to receive (slippage protection) */
+  minimumTokenBAmount: bigint;
+  /** Optional: User's token A account (will derive ATA if not provided) */
+  userTokenAAccount?: PublicKey;
+  /** Optional: User's token B account (will derive ATA if not provided) */
+  userTokenBAccount?: PublicKey;
 }
