@@ -1,4 +1,4 @@
-import { BN } from '@coral-xyz/anchor';
+import BN from "bn.js";
 import { PublicKey } from '@solana/web3.js';
 
 /**
@@ -37,15 +37,15 @@ export const POOL_ACCOUNT_SIZE = 324; // legacy Saros pool account size
 // 4 basis points = 0.04%
 // 0.02% to LPs, 0.02% to Saros
 export const DEFAULT_FEES = {
-  tradeFeeNumerator: new BN(2), // 0.02% LP
+  tradeFeeNumerator: new BN(2),
   tradeFeeDenominator: new BN(10000),
 
-  ownerTradeFeeNumerator: new BN(2), // 0.02% Saros
+  ownerTradeFeeNumerator: new BN(2),
   ownerTradeFeeDenominator: new BN(10000),
 
   ownerWithdrawFeeNumerator: new BN(0),
   ownerWithdrawFeeDenominator: new BN(1),
 
-  hostFeeNumerator: new BN(20), // 20% of owner fee to referrer
+  hostFeeNumerator: new BN(20),
   hostFeeDenominator: new BN(100),
 };

@@ -1,4 +1,4 @@
-import { PublicKey, Transaction, Keypair } from '@solana/web3.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
 import type { BN } from '@coral-xyz/anchor';
 
 /**
@@ -100,9 +100,9 @@ export interface CreatePairResult {
   /** Transaction to create the pair */
   transaction: Transaction;
   /** Pair account keypair (signer required) */
-  pairKeypair: Keypair;
+  pairKeypair: PublicKey;
   /** LP token mint keypair (signer required) */
-  lpMintKeypair: Keypair;
+  lpMintKeypair: PublicKey;
   /** Pair address */
   pairAddress: PublicKey;
   /** LP token mint address */

@@ -82,10 +82,7 @@ export async function ensureAMMTokenAndPool(
     curveType: SwapCurveType.ConstantProduct,
   });
 
-  await waitForConfirmation(
-    await connection.sendTransaction(result.transaction, [payer, result.pairKeypair, result.lpMintKeypair]),
-    connection
-  );
+  await waitForConfirmation(await connection.sendTransaction(result.transaction, [payer]), connection);
 
   const pool: TestAMMPool = {
     pair: result.pairAddress,
