@@ -142,7 +142,11 @@ export class SarosFarm {
     const transaction = new Transaction();
 
     // Derive user pool address
-    const [userPoolAddress, userPoolNonce] = deriveFarmUserPoolAddress(payer, this.poolAddress, this.farmProgram.programId);
+    const [userPoolAddress, userPoolNonce] = deriveFarmUserPoolAddress(
+      payer,
+      this.poolAddress,
+      this.farmProgram.programId
+    );
 
     // Derive or use provided user staking token account
     const userStakingTokenAccount =
@@ -301,7 +305,11 @@ export class SarosFarm {
     const poolRewardAccount = await this.accounts.poolReward.fetch(poolRewardAddress);
 
     // Derive addresses
-    const [userPoolRewardAddress] = deriveFarmUserPoolRewardAddress(payer, poolRewardAddress, this.farmProgram.programId);
+    const [userPoolRewardAddress] = deriveFarmUserPoolRewardAddress(
+      payer,
+      poolRewardAddress,
+      this.farmProgram.programId
+    );
     const [poolRewardAuthority] = deriveFarmPoolRewardAuthority(poolRewardAddress, this.farmProgram.programId);
 
     const userRewardTokenAccount =

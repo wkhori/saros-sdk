@@ -1,7 +1,7 @@
 import * as borsh from '@coral-xyz/borsh';
 import { BN } from '@coral-xyz/anchor';
 import { PublicKey } from '@solana/web3.js';
-import type { AMMPairAccount } from '../types';
+import { AMMPairAccount, SwapCurveType } from '../types';
 
 /**
  * Manual Borsh decoder for legacy Anchor programs without discriminators.
@@ -114,4 +114,26 @@ function decodeCurveType(curveType: number): any {
     default:
       return { constantProduct: {} };
   }
+}
+
+export function encodeCurveType(curveType: SwapCurveType): Buffer {
+  // Legacy-compatible: 32-byte buffer with curve enum
+  const buf = Buffer.alloc(32);
+  switch (curveType) {
+    case SwapCurveType.ConstantProduct:
+      buf[0] = 0;
+      break;
+    case SwapCurveType.ConstantPrice:
+      buf[0] = 1;
+      break;
+    case SwapCurveType.Stable:
+      buf[0] = 2;
+      break;
+    case SwapCurveType.Offset:
+      buf[0] = 3;
+      break;
+    default:
+      buf[0] = 0;
+  }
+  return buf;
 }
