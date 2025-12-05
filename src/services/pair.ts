@@ -65,7 +65,7 @@ export class SarosAMMPair extends SarosBaseService {
 
       // 5️⃣ Build transaction
       const tx: Transaction = await this.ammProgram.methods
-        .initialize(fees, swapCurve, swapCalculator)
+        .initialize(fees, { constantProduct: {} }, swapCalculator)
         .accounts({
           swapInfo,
           authorityInfo: payer,
