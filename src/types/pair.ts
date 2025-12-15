@@ -1,7 +1,6 @@
 import { Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import type { BN } from '@coral-xyz/anchor';
 
-
 /**
  * AMM Pair account structure
  */
@@ -119,8 +118,6 @@ export interface CreatePairResult {
   /** Signers required for the transaction */
   signers: Keypair[];
 }
-
-
 
 /**
  * Parameters for adding liquidity to a pool

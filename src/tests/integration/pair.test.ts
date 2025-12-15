@@ -6,6 +6,10 @@ import { loadOrCreateWallet } from '../setup/wallet';
 import { ensureAMMTokenAndPool } from '../setup/amm-token';
 import type { TestToken, TestAMMPool } from '../setup/amm-token';
 
+// Use devnet for integration tests
+// Configure RPC endpoints in .env.test file
+const RPC_ENDPOINT = process.env.DEVNET_RPC_URL || 'https://api.mainnet-beta.solana.com';
+
 describe('AMM Pair Integration Tests', () => {
   let connection: Connection;
   let tokenA: TestToken;
@@ -14,7 +18,7 @@ describe('AMM Pair Integration Tests', () => {
   let pair: SarosAMMPair;
 
   beforeAll(async () => {
-    connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+    connection = new Connection(RPC_ENDPOINT, 'confirmed');
     const wallet = await loadOrCreateWallet(connection);
 
     console.log(`\nTest wallet: ${wallet.address}`);

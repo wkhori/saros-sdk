@@ -7,6 +7,7 @@ import { SarosAPIService } from '../../services/api';
  * - New farms cannot be created (admin-only operation).
  * - No active farms available for testing on Devnet at this time.
  */
+// update to use saros farm service instead of direct API calls
 describe('Farm/Stake API Integration Tests', () => {
   describe('Farm API', () => {
     it('should fetch farm info from API', async () => {

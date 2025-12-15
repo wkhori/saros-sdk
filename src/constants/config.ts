@@ -1,6 +1,6 @@
-import BN from "bn.js";
+import BN from 'bn.js';
 import { PublicKey } from '@solana/web3.js';
-import { SwapCurveType } from "../types/pair";
+import { SwapCurveType } from '../types/pair';
 
 /**
  * Supported network modes (devnet, mainnet)

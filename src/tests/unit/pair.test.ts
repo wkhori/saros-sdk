@@ -5,11 +5,11 @@ import { SarosAMMPair } from '../../services/pair';
 
 const TEST_POOL_ADDRESS = new PublicKey('HmQL6eECoaGLWvTxz6cWT3jEsPfjdin2vNVJ1xKiwjXz');
 
-// Use mainnet for integration tests
+// Use mainnet for unit tests
 // Configure RPC endpoints in .env.test file
 const RPC_ENDPOINT = process.env.RPC_URL || 'https://api.mainnet-beta.solana.com';
 
-describe('SarosAMMPair Integration Tests', () => {
+describe('SarosAMMPair Unit Tests', () => {
   let connection: Connection;
   let pair: SarosAMMPair;
 

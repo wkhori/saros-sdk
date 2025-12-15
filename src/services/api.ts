@@ -5,7 +5,7 @@
  * Includes fallback handling for when the API is unavailable.
  *
  * ⚠️ WARNING: This service is tightly coupled to the Saros API schemas.
- * Any changes to https://api.saros.xyz response structure will break this code 
+ * Any changes to https://api.saros.xyz response structure will break this code
  * and require updates to SarosAPIFarmInfo and SarosAPIStakeInfo interfaces.
  */
 

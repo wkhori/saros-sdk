@@ -16,13 +16,7 @@ describe('Calculation Utilities', () => {
       const tradeFeeNumerator = 25n; // 0.25%
       const tradeFeeDenominator = 10000n;
 
-      const output = calculateSwapOutput(
-        amountIn,
-        reserveIn,
-        reserveOut,
-        tradeFeeNumerator,
-        tradeFeeDenominator
-      );
+      const output = calculateSwapOutput(amountIn, reserveIn, reserveOut, tradeFeeNumerator, tradeFeeDenominator);
 
       expect(output).toBeGreaterThan(0n);
       expect(output).toBeLessThan(amountIn * 2n);
@@ -122,9 +116,9 @@ describe('Calculation Utilities', () => {
     });
 
     it('should throw error for zero LP supply', () => {
-      expect(() =>
-        calculateAddLiquidityAmounts(1_000_000n, 100_000_000n, 200_000_000n, 0n)
-      ).toThrow('Pool has no liquidity');
+      expect(() => calculateAddLiquidityAmounts(1_000_000n, 100_000_000n, 200_000_000n, 0n)).toThrow(
+        'Pool has no liquidity'
+      );
     });
 
     it('should handle equal reserves', () => {
@@ -164,9 +158,9 @@ describe('Calculation Utilities', () => {
     });
 
     it('should throw error for zero LP supply', () => {
-      expect(() =>
-        calculateRemoveLiquidityAmounts(1_000_000n, 100_000_000n, 200_000_000n, 0n)
-      ).toThrow('Pool has no liquidity');
+      expect(() => calculateRemoveLiquidityAmounts(1_000_000n, 100_000_000n, 200_000_000n, 0n)).toThrow(
+        'Pool has no liquidity'
+      );
     });
 
     it('should calculate correct share of pool', () => {

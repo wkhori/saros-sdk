@@ -47,7 +47,6 @@ export async function ensureAMMTokenAndPool(
       };
     } catch (_error) {
       console.log('⚠️  Failed to load saved data, creating new tokens and pool...');
-
     }
   }
 
@@ -93,7 +92,7 @@ export async function ensureAMMTokenAndPool(
 
   // Sign and send transaction
   console.log('Sending transaction to create AMM pair...');
-const sig = await sendAndConfirmTransaction(connection, result.transaction, [payer, ...result.signers]);
+  const sig = await sendAndConfirmTransaction(connection, result.transaction, [payer, ...result.signers]);
   console.log('✅ AMM Pair created! Transaction signature:', sig);
   console.log('🔗 View on explorer:', `https://explorer.solana.com/tx/${sig}?cluster=devnet`);
   // await waitForConfirmation(sig, connection);

@@ -11,7 +11,6 @@ export interface PoolAccount {
 
 export type PoolState = { paused: {} } | { unpaused: {} };
 
-
 // Operation params
 export interface StakeParams {
   payer: PublicKey;

@@ -375,7 +375,7 @@ export class SarosFarm {
             rewardPending: BigInt(userPoolRewardAccount.rewardPending.toString()),
           });
         } catch {
-          // User pool reward doesn't exist yet
+          // Silently ignore if user pool reward doesn't exist yet
         }
       }
     }
