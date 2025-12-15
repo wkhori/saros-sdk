@@ -1,16 +1,14 @@
 import * as borsh from '@coral-xyz/borsh';
 import { BN } from '@coral-xyz/anchor';
 import { PublicKey } from '@solana/web3.js';
-import { AMMPairAccount, SwapCurveType } from '../types';
+import { AMMPairAccount } from '../types';
 
 /**
  * Manual Borsh decoder for legacy Anchor programs without discriminators.
- *
- * The Saros AMM program is a legacy Anchor program that doesn't use the standard
- * 8-byte discriminator. Based on the original TokenSwapLayout from the old SDK.
+ * ❌ The Saros AMM program does NOT use Anchor discriminators - MUST use manual decoder
+ * Anchor's `.fetch()` method will fail because it expects the discriminator.
  */
 
-// Type for decoded token swap data
 interface DecodedTokenSwap {
   version: number;
   isInitialized: number;
@@ -35,7 +33,6 @@ interface DecodedTokenSwap {
 }
 
 // Define Pair account structure matching the on-chain data layout
-// This matches the original TokenSwapLayout from sarosSwapIntructions.js
 const tokenSwapLayout = borsh.struct<DecodedTokenSwap>([
   borsh.u8('version'),
   borsh.u8('isInitialized'),
@@ -114,26 +111,4 @@ function decodeCurveType(curveType: number): any {
     default:
       return { constantProduct: {} };
   }
-}
-
-export function encodeCurveType(curveType: SwapCurveType): Buffer {
-  // Legacy-compatible: 32-byte buffer with curve enum
-  const buf = Buffer.alloc(32);
-  switch (curveType) {
-    case SwapCurveType.ConstantProduct:
-      buf[0] = 0;
-      break;
-    case SwapCurveType.ConstantPrice:
-      buf[0] = 1;
-      break;
-    case SwapCurveType.Stable:
-      buf[0] = 2;
-      break;
-    case SwapCurveType.Offset:
-      buf[0] = 3;
-      break;
-    default:
-      buf[0] = 0;
-  }
-  return buf;
 }
