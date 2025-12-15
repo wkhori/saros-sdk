@@ -1,5 +1,5 @@
 import { BN } from '@coral-xyz/anchor';
-import { PublicKey, Transaction } from '@solana/web3.js';
+import { Keypair, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import * as spl from '@solana/spl-token';
 import { SarosBaseService, SarosAMMConfig } from './base';
 import {
@@ -12,12 +12,14 @@ import {
   FeeMetadata,
   CreatePairParams,
   CreatePairResult,
+  AddLiquidityParams,
+  RemoveLiquidityParams,
 } from '../types';
 import { calculateSwapOutput, calculatePriceImpact, getMinOutputWithSlippage } from '../utils/calculations';
 import { derivePoolAuthority } from '../utils/pda';
 import { SarosAMMError } from '../utils/errors';
 import { decodePairAccount } from '../utils/legacyAccountDecoder';
-import { DEFAULT_FEES } from '../constants/config';
+import { CURVE_TYPE_MAP, DEFAULT_FEES, DEFAULT_SWAP_CALCULATOR, SWAP_ACCOUNT_SIZE } from '../constants/config';
 
 export class SarosAMMPair extends SarosBaseService {
   private pairAddress: PublicKey;
@@ -31,110 +33,175 @@ export class SarosAMMPair extends SarosBaseService {
     this.pairAddress = pairAddress;
   }
 
-  public async createPair(params: CreatePairParams): Promise<CreatePairResult> {
-    const { payer, feeOwner, tokenAMint, tokenBMint } = params;
-
-    try {
-      // Fees as BN
-      const fees = DEFAULT_FEES;
-
-      // Swap curve — legacy struct style
-      const swapCurve: any = {
-        curveType: 0, // 0 = ConstantProduct, 1 = ConstantPrice, etc.
-        curveParameters: new Array(32).fill(0), // 32-byte array
-      };
-
-      // Swap calculator
-      const swapCalculator: number[] = new Array(32).fill(0);
-
-      // 4️⃣ Derive PDAs
-      const [swapInfo] = await PublicKey.findProgramAddress(
-        [Buffer.from('swap'), tokenAMint.toBuffer(), tokenBMint.toBuffer()],
-        this.ammProgram.programId
-      );
-
-      const [lpMint] = await PublicKey.findProgramAddress(
-        [Buffer.from('lp'), swapInfo.toBuffer()],
-        this.ammProgram.programId
-      );
-
-      const [feeAccount] = await PublicKey.findProgramAddress(
-        [Buffer.from('fee'), swapInfo.toBuffer()],
-        this.ammProgram.programId
-      );
-
-      // 5️⃣ Build transaction
-      const tx: Transaction = await this.ammProgram.methods
-        .initialize(fees, swapCurve, swapCalculator)
-        .accounts({
-          swapInfo,
-          authorityInfo: payer,
-          tokenAInfo: tokenAMint,
-          tokenBInfo: tokenBMint,
-          poolMintInfo: lpMint,
-          feeAccountInfo: feeAccount,
-          destinationInfo: payer,
-          tokenProgramInfo: spl.TOKEN_PROGRAM_ID,
-        })
-        .transaction();
-
-      return {
-        transaction: tx,
-        pairAddress: swapInfo,
-        lpTokenMint: lpMint,
-        pairKeypair: swapInfo, // legacy compatibility
-        lpMintKeypair: lpMint, // legacy compatibility
-        pairAuthority: feeOwner, // IDL handles authority internally
-      };
-    } catch (error: any) {
-      console.error('Error creating AMM pair:', error);
-      throw SarosAMMError.PairCreationFailed();
-    }
-  }
-
-  /** Get pair metadata */
-  public getPairMetadata(): PairMetadata {
-    return this.metadata;
-  }
-
-  /** Get pair account data */
-  public getPairAccount(): AMMPairAccount {
-    return this.pairAccount;
-  }
-
-  /** Get pair address */
+  /**
+   * Get the pair address
+   */
   public getPairAddress(): PublicKey {
     return this.pairAddress;
   }
 
-  /** Refresh pair state data (reserves, fees, etc.) */
+  /**
+   * Get the pair account data
+   */
+  public getPairAccount(): AMMPairAccount {
+    if (!this.pairAccount) {
+      throw SarosAMMError.PairNotInitialized();
+    }
+    return this.pairAccount;
+  }
+
+  /**
+   * Get the pair metadata
+   */
+  public getPairMetadata(): PairMetadata {
+    if (!this.metadata) {
+      throw SarosAMMError.PairNotInitialized();
+    }
+    return this.metadata;
+  }
+
+  /**
+   * Fetch and refresh pair state from chain
+   */
   public async refreshState(): Promise<void> {
     try {
-      // For legacy Anchor programs without discriminators
       const accountInfo = await this.connection.getAccountInfo(this.pairAddress);
-
       if (!accountInfo) {
-        throw SarosAMMError.PairNotInitialized();
+        throw SarosAMMError.PairFetchFailed();
       }
 
-      // Manually decode using custom Borsh layout for legacy programs
-      // The Saros AMM program doesn't use Anchor discriminators
+      // Use legacy decoder since Saros AMM doesn't use discriminators
       this.pairAccount = decodePairAccount(accountInfo.data);
 
-      if (!this.pairAccount || !this.pairAccount.isInitialized) {
-        throw SarosAMMError.PairNotInitialized();
-      }
-
       // Derive pool authority
-      const [authority] = derivePoolAuthority(this.pairAddress, this.ammProgram.programId);
-      this.poolAuthority = authority;
+      const [poolAuthority] = derivePoolAuthority(this.pairAddress, this.ammProgram.programId);
+      this.poolAuthority = poolAuthority;
 
+      // Build metadata with current reserves
       this.metadata = await this.buildPairMetadata();
     } catch (error) {
-      console.error('Error refreshing pair state:', error);
       SarosAMMError.handleError(error, SarosAMMError.PairFetchFailed());
     }
   }
+
+
+  public async createPair(params: CreatePairParams): Promise<CreatePairResult> {
+  const { payer, feeOwner, tokenAMint, tokenBMint, curveType, initialTokenAAmount, initialTokenBAmount } = params;
+
+  try {
+    console.log('💡 Generating keypairs for swap account and LP mint...');
+    const swapInfoKeypair = Keypair.generate();
+    const lpMintKeypair = Keypair.generate();
+
+    console.log('💡 Deriving pool authority PDA...');
+    const [poolAuthority] = derivePoolAuthority(swapInfoKeypair.publicKey, this.ammProgram.programId);
+
+    console.log('💡 Calculating associated token accounts...');
+    const poolTokenA = await spl.getAssociatedTokenAddress(tokenAMint, poolAuthority, true);
+    const poolTokenB = await spl.getAssociatedTokenAddress(tokenBMint, poolAuthority, true);
+    const userLpTokenAccount = await spl.getAssociatedTokenAddress(lpMintKeypair.publicKey, payer);
+    const feeAccount = await spl.getAssociatedTokenAddress(lpMintKeypair.publicKey, feeOwner);
+    const userTokenA = await spl.getAssociatedTokenAddress(tokenAMint, payer);
+    const userTokenB = await spl.getAssociatedTokenAddress(tokenBMint, payer);
+
+    console.log('💡 Calculating rent-exempt balances...');
+    const swapAccountRent = await this.connection.getMinimumBalanceForRentExemption(SWAP_ACCOUNT_SIZE);
+    const mintRent = await this.connection.getMinimumBalanceForRentExemption(spl.MINT_SIZE);
+    const tokenAccountRent = await this.connection.getMinimumBalanceForRentExemption(spl.ACCOUNT_SIZE);
+
+    console.log('💡 Building transaction...');
+    const tx = new Transaction();
+    const { blockhash } = await this.connection.getLatestBlockhash();
+    tx.recentBlockhash = blockhash;
+    tx.feePayer = payer;
+
+    // 1️⃣ Create and initialize LP mint
+    console.log('💡 Adding LP mint creation instructions...');
+    tx.add(
+      SystemProgram.createAccount({
+        fromPubkey: payer,
+        newAccountPubkey: lpMintKeypair.publicKey,
+        space: spl.MINT_SIZE,
+        lamports: mintRent,
+        programId: spl.TOKEN_PROGRAM_ID,
+      }),
+      spl.createInitializeMintInstruction(lpMintKeypair.publicKey, 9, poolAuthority, null)
+    );
+
+    // 2️⃣ Create pool token accounts (ATAs owned by PDA)
+    console.log('💡 Adding pool token account creation...');
+    tx.add(
+      spl.createAssociatedTokenAccountInstruction(payer, poolTokenA, poolAuthority, tokenAMint),
+      spl.createAssociatedTokenAccountInstruction(payer, poolTokenB, poolAuthority, tokenBMint)
+    );
+
+    // 3️⃣ Create user LP token ATA
+    console.log('💡 Adding user LP token ATA creation...');
+    tx.add(spl.createAssociatedTokenAccountInstruction(payer, userLpTokenAccount, payer, lpMintKeypair.publicKey));
+
+    // 4️⃣ Create fee account ATA
+    console.log('💡 Adding fee account ATA creation...');
+    tx.add(spl.createAssociatedTokenAccountInstruction(payer, feeAccount, feeOwner, lpMintKeypair.publicKey));
+
+    // 6️⃣ Transfer initial liquidity to pool
+    console.log('💡 Adding initial liquidity transfer...');
+    tx.add(
+      spl.createTransferInstruction(userTokenA, poolTokenA, payer, initialTokenAAmount),
+      spl.createTransferInstruction(userTokenB, poolTokenB, payer, initialTokenBAmount)
+    );
+
+    // 7️⃣ Create swap account
+    console.log('💡 Adding swap account creation...');
+    tx.add(
+      SystemProgram.createAccount({
+        fromPubkey: payer,
+        newAccountPubkey: swapInfoKeypair.publicKey,
+        space: SWAP_ACCOUNT_SIZE,
+        lamports: swapAccountRent,
+        programId: this.ammProgram.programId,
+      })
+    );
+
+    // 8️⃣ Initialize swap
+    console.log('💡 Adding swap initialization instruction...');
+    const initIx = await this.ammProgram.methods
+      .initialize(DEFAULT_FEES, CURVE_TYPE_MAP[curveType], DEFAULT_SWAP_CALCULATOR)
+      .accounts({
+        swapInfo: swapInfoKeypair.publicKey,
+        authorityInfo: poolAuthority,
+        tokenAInfo: poolTokenA,
+        tokenBInfo: poolTokenB,
+        poolMintInfo: lpMintKeypair.publicKey,
+        feeAccountInfo: feeAccount,
+        destinationInfo: userLpTokenAccount,
+        tokenProgramInfo: spl.TOKEN_PROGRAM_ID,
+      })
+      .instruction();
+    tx.add(initIx);
+
+    const signers = [lpMintKeypair, swapInfoKeypair];
+
+    console.log('💡 Transaction built, signers:', signers.map(kp => kp.publicKey.toBase58()));
+
+    return {
+      transaction: tx,
+      pairAddress: swapInfoKeypair.publicKey,
+      lpTokenMint: lpMintKeypair.publicKey,
+      pairKeypair: swapInfoKeypair,
+      lpMintKeypair,
+      poolTokenA,
+      poolTokenB,
+      feeAccount,
+      pairAuthority: poolAuthority,
+      signers,
+    };
+  } catch (error: any) {
+    console.error('❌ Error creating AMM pair:', error);
+    throw SarosAMMError.PairCreationFailed();
+  }
+}
+
+
 
   /**
    * Get a quote for a swap
@@ -250,10 +317,137 @@ export class SarosAMMPair extends SarosBaseService {
     return tx;
   }
 
+  /**
+   * Add liquidity to an existing pool
+   *
+   * Calculates required token amounts based on current pool ratios and creates
+   * a transaction to deposit tokens and mint LP tokens.
+   *
+   * @param params - Liquidity addition parameters
+   * @returns Transaction for user to sign and send
+   *
+   * @example
+   * const tx = await pair.addLiquidity({
+   *   payer: wallet.publicKey,
+   *   poolTokenAmount: 1_000_000_000n,
+   *   maximumTokenA: 10_000_000n,
+   *   maximumTokenB: 10_000_000n
+   * });
+   *
+   * const signature = await connection.sendTransaction(tx, [wallet]);
+   */
+  public async addLiquidity(params: AddLiquidityParams): Promise<Transaction> {
+    const { poolTokenAmount, maximumTokenA, maximumTokenB, payer, transaction } = params;
+
+    // 1. Validate inputs
+    if (poolTokenAmount <= 0n) throw SarosAMMError.ZeroAmount();
+    if (maximumTokenA <= 0n || maximumTokenB <= 0n) throw SarosAMMError.InvalidSlippage();
+
+    // 2. Create or use existing transaction
+    const tx = transaction || new Transaction();
+
+    // 3. Get pool account data
+    const { tokenAMint, tokenBMint, tokenA, tokenB, poolMint } = this.pairAccount;
+
+    // 4. Get or derive user token accounts (use ATAs like swap does)
+    const userTokenA = params.userTokenX || (await spl.getAssociatedTokenAddress(tokenAMint, payer, true));
+    const userTokenB = params.userTokenY || (await spl.getAssociatedTokenAddress(tokenBMint, payer, true));
+    const userLpToken = params.userLpToken || (await spl.getAssociatedTokenAddress(poolMint, payer, true));
+
+    // 5. Build Anchor instruction (like swap does)
+    const depositIx = await this.ammProgram.methods
+      .depositAllTokenTypes(
+        new BN(poolTokenAmount.toString()),
+        new BN(maximumTokenA.toString()),
+        new BN(maximumTokenB.toString())
+      )
+      .accountsPartial({
+        swapInfo: this.pairAddress,
+        authorityInfo: this.poolAuthority,
+        userTransferAuthorityInfo: payer,
+        sourceAInfo: userTokenA,
+        sourceBInfo: userTokenB,
+        tokenAInfo: tokenA,
+        tokenBInfo: tokenB,
+        poolMintInfo: poolMint,
+        destInfo: userLpToken,
+        tokenProgramInfo: spl.TOKEN_PROGRAM_ID,
+      })
+      .instruction();
+
+    tx.add(depositIx);
+
+    // 6. Return transaction (user signs and sends)
+    return tx;
+  }
+
+  /**
+   * Remove liquidity from a pool
+   *
+   * Burns LP tokens and withdraws proportional amounts of underlying tokens.
+   *
+   * @param params - Liquidity removal parameters
+   * @returns Transaction for user to sign and send
+   *
+   * @example
+   * const tx = await pair.removeLiquidity({
+   *   payer: wallet.publicKey,
+   *   poolTokenAmount: 1_000_000_000n,
+   *   minimumTokenA: 9_500_000n,
+   *   minimumTokenB: 9_500_000n
+   * });
+   *
+   * const signature = await connection.sendTransaction(tx, [wallet]);
+   */
+  public async removeLiquidity(params: RemoveLiquidityParams): Promise<Transaction> {
+    const { poolTokenAmount, minimumTokenA, minimumTokenB, payer, transaction } = params;
+
+    // 1. Validate inputs
+    if (poolTokenAmount <= 0n) throw SarosAMMError.ZeroAmount();
+    if (minimumTokenA < 0n || minimumTokenB < 0n) throw SarosAMMError.InvalidSlippage();
+
+    // 2. Create or use existing transaction
+    const tx = transaction || new Transaction();
+
+    // 3. Get pool account data
+    const { tokenAMint, tokenBMint, tokenA, tokenB, poolMint, poolFeeAccount } = this.pairAccount;
+
+    // 4. Get or derive user token accounts (use ATAs like swap does)
+    const userTokenA = params.userTokenX || (await spl.getAssociatedTokenAddress(tokenAMint, payer, true));
+    const userTokenB = params.userTokenY || (await spl.getAssociatedTokenAddress(tokenBMint, payer, true));
+    const userLpToken = params.userLpToken || (await spl.getAssociatedTokenAddress(poolMint, payer, true));
+
+    // 5. Build Anchor instruction (like swap does)
+    const withdrawIx = await this.ammProgram.methods
+      .withdrawAllTokenTypes(
+        new BN(poolTokenAmount.toString()),
+        new BN(minimumTokenA.toString()),
+        new BN(minimumTokenB.toString())
+      )
+      .accountsPartial({
+        swapInfo: this.pairAddress,
+        authorityInfo: this.poolAuthority,
+        userTransferAuthorityInfo: payer,
+        poolMintInfo: poolMint,
+        sourceInfo: userLpToken,
+        tokenAInfo: tokenA,
+        tokenBInfo: tokenB,
+        destTokenAInfo: userTokenA,
+        destTokenBInfo: userTokenB,
+        poolFeeAccountInfo: poolFeeAccount,
+        tokenProgramInfo: spl.TOKEN_PROGRAM_ID,
+      })
+      .instruction();
+
+    tx.add(withdrawIx);
+
+    // 6. Return transaction (user signs and sends)
+    return tx;
+  }
+
   // -----------------------------------------------------------------------------
   // Private helpers
   // -----------------------------------------------------------------------------
-
   private async buildPairMetadata(): Promise<PairMetadata> {
     const { tokenAMint, tokenBMint, tokenA, tokenB, poolMint, poolFeeAccount, fees, swapCurve } = this.pairAccount;
 
