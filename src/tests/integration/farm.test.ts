@@ -2,17 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { SarosAPIService } from '../../services/api';
 
 /**
- * Farm/Stake Integration Tests
- *
- * Note:
+ * Farm/Stake Tests
  * - These tests only validate API responses, data structures, and metadata.
- * - The farm service does NOT expose pool creation functions, as these are
- *   admin-only operations.
- * - Devnet currently has no active pools; legacy pools are present but inactive.
- *
- * To test actual staking or unstaking operations, you would need:
- * 1. Admin/root authority to create farm pools.
- * 2. Funded wallets (mainnet) — not recommended for automated tests.
+ * - New farms cannot be created (admin-only operation).
+ * - No active farms available for testing on Devnet at this time.
  */
 describe('Farm/Stake API Integration Tests', () => {
   describe('Farm API', () => {
@@ -27,8 +20,9 @@ describe('Farm/Stake API Integration Tests', () => {
         if (farms.length > 0) {
           const farm = farms[0];
           expect(farm).toHaveProperty('poolAddress');
-          expect(farm).toHaveProperty('lpToken');
-          expect(farm).toHaveProperty('stakingTokenMint');
+          expect(farm).toHaveProperty('rewards');
+          expect(farm).toHaveProperty('poolLpAddress');
+          expect(farm).toHaveProperty('lpInfo');
         }
       }
     });
@@ -58,7 +52,9 @@ describe('Farm/Stake API Integration Tests', () => {
         if (stakes.length > 0) {
           const stake = stakes[0];
           expect(stake).toHaveProperty('poolAddress');
-          expect(stake).toHaveProperty('stakingTokenMint');
+          expect(stake).toHaveProperty('rewards');
+          expect(stake).toHaveProperty('startBlock');
+          expect(stake).toHaveProperty('endBlock');
         }
       }
     });

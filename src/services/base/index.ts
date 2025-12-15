@@ -23,7 +23,7 @@ export abstract class SarosBaseService {
     // Get program ID for the specified network
     const programId = AMM_PROGRAM_IDS[config.mode];
 
-    // Create program instanceusing mainnet IDL and network-specific program ID
+    // Create program instance using mainnet IDL and network-specific program ID
     this.ammProgram = new Program({ ...SarosSwapIDL, address: programId.toBase58() } as SarosSwap, provider);
   }
 

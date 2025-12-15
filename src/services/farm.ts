@@ -64,7 +64,6 @@ export class SarosFarm {
 
   /**
    * Typed accessor for program accounts
-   * Using 'as any' because Farm IDL uses legacy format
    */
   private get accounts() {
     return this.farmProgram.account as any;
