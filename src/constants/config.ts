@@ -1,5 +1,6 @@
 import BN from "bn.js";
 import { PublicKey } from '@solana/web3.js';
+import { SwapCurveType } from "../types/pair";
 
 /**
  * Supported network modes (devnet, mainnet)
@@ -11,9 +12,7 @@ export enum MODE {
 
 /**
  * AMM Program IDs across networks
- *
- * Note: Devnet version does not include pool metadata feature
- * (SSStkgZHW17LRbGUFSDQqzZ4jMXpfmVxHDbWwMaFEXE)
+ * Note: Devnet version does not include latest pool metadata features.
  */
 export const AMM_PROGRAM_IDS: Record<MODE, PublicKey> = {
   [MODE.MAINNET]: new PublicKey('SSwapUtytfBdBn1b9NUGG6foMVPtcWgpRU32HToDUZr'),
@@ -29,23 +28,33 @@ export const FARM_PROGRAM_IDS: Record<MODE, PublicKey> = {
   [MODE.DEVNET]: new PublicKey('SFFxHvYKTBgC7XYEZDua6m28NZo9fNnDRCEtM7AHR4m'),
 };
 
-// Sizes for accounts
-export const MINT_ACCOUNT_SIZE = 82; // standard SPL mint
-export const POOL_ACCOUNT_SIZE = 324; // legacy Saros pool account size
+// Legacy Saros swap account size
+export const SWAP_ACCOUNT_SIZE = 324;
 
 // Default fees for AMM pairs
-// 4 basis points = 0.04%
-// 0.02% to LPs, 0.02% to Saros
 export const DEFAULT_FEES = {
-  tradeFeeNumerator: new BN(2),
+  tradeFeeNumerator: new BN(0),
   tradeFeeDenominator: new BN(10000),
 
-  ownerTradeFeeNumerator: new BN(2),
+  ownerTradeFeeNumerator: new BN(30),
   ownerTradeFeeDenominator: new BN(10000),
 
   ownerWithdrawFeeNumerator: new BN(0),
-  ownerWithdrawFeeDenominator: new BN(1),
+  ownerWithdrawFeeDenominator: new BN(0),
 
   hostFeeNumerator: new BN(20),
   hostFeeDenominator: new BN(100),
 };
+
+/**
+ * Anchor-compatible curve type encoding
+ * Used by AMM initialize instruction
+ */
+export const CURVE_TYPE_MAP: Record<SwapCurveType, any> = {
+  [SwapCurveType.ConstantProduct]: { constantProduct: {} },
+  [SwapCurveType.ConstantPrice]: { constantPrice: {} },
+  [SwapCurveType.Stable]: { stable: {} },
+  [SwapCurveType.Offset]: { offset: {} },
+};
+// Default swap calculator (32 bytes of zero)
+export const DEFAULT_SWAP_CALCULATOR = Array.from(new Uint8Array(32));
