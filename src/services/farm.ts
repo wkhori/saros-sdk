@@ -1,7 +1,7 @@
 import { Connection, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
 import { AnchorProvider, Program, Wallet, BN } from '@coral-xyz/anchor';
 import * as spl from '@solana/spl-token';
-import { FARM_PROGRAM_IDS, MODE } from '../constants/config';
+import { FARM_PROGRAM_IDS } from '../constants/config';
 import { FARM_IDL } from '../constants/idl/farm';
 import { SarosAPIService, type SarosAPIFarmInfo, type SarosAPIStakeInfo } from './api';
 import { SarosAMMError } from '../utils/errors';
@@ -12,6 +12,7 @@ import {
   deriveFarmPoolRewardAuthority,
 } from '../utils/pda';
 import type { PoolAccount, StakeParams, UnstakeParams, ClaimRewardParams, UserPosition } from '../types/farm';
+import { SarosAMMConfig } from './base';
 
 /**
  * Pool type for API filtering only.
@@ -20,11 +21,6 @@ import type { PoolAccount, StakeParams, UnstakeParams, ClaimRewardParams, UserPo
  * - 'stake': Single token staking pools (from /api/saros/information?type=stake)
  */
 export type PoolType = 'farm' | 'stake';
-
-export interface SarosFarmConfig {
-  mode: MODE;
-  connection: Connection;
-}
 
 /**
  * Unified farming service for both LP token farming and single token staking
@@ -53,7 +49,7 @@ export interface SarosFarmConfig {
  * ```
  */
 export class SarosFarm {
-  private config: SarosFarmConfig;
+  private config: SarosAMMConfig;
   private connection: Connection;
   private farmProgram!: Program;
   private poolAddress: PublicKey;
@@ -69,7 +65,7 @@ export class SarosFarm {
     return this.farmProgram.account as any;
   }
 
-  constructor(config: SarosFarmConfig, poolAddress: PublicKey, poolType: PoolType = 'farm') {
+  constructor(config: SarosAMMConfig, poolAddress: PublicKey, poolType: PoolType = 'farm') {
     this.config = config;
     this.connection = config.connection;
     this.poolAddress = poolAddress;
