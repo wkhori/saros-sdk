@@ -2,7 +2,7 @@
  * Program IDL in camelCase format in order to be used in JS/TS.
  *
  * Note that this is only a type helper and is not the actual IDL. The original
- * IDL can be found at `src/constants/amm_idl.json`.
+ * IDL can be found at `src/constants/idl/amm.json`.
  */
 export type SarosSwap = {
   address: 'SSwapUtytfBdBn1b9NUGG6foMVPtcWgpRU32HToDUZr';

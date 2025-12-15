@@ -1,7 +1,7 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { AnchorProvider, Program, Wallet } from '@coral-xyz/anchor';
 import { AMM_PROGRAM_IDS, MODE } from '../../constants/config';
-import SarosSwapIDL from '../../constants/amm_idl.json';
+import SarosSwapIDL from '../../constants/idl/amm.json';
 import type { SarosSwap } from '../../constants/idl/amm';
 
 export interface SarosAMMConfig {
