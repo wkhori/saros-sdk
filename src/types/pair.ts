@@ -1,5 +1,6 @@
-import { PublicKey, Transaction } from '@solana/web3.js';
+import { Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import type { BN } from '@coral-xyz/anchor';
+
 
 /**
  * AMM Pair account structure
@@ -100,16 +101,26 @@ export interface CreatePairResult {
   /** Transaction to create the pair */
   transaction: Transaction;
   /** Pair account keypair (signer required) */
-  pairKeypair: PublicKey;
+  pairKeypair: Keypair;
   /** LP token mint keypair (signer required) */
-  lpMintKeypair: PublicKey;
+  lpMintKeypair: Keypair;
+  /** Pool token A ATA address (derived from pool authority) */
+  poolTokenA: PublicKey;
+  /** Pool token B ATA address (derived from pool authority) */
+  poolTokenB: PublicKey;
+  /** Fee account ATA address (LP mint ATA owned by feeOwner) */
+  feeAccount: PublicKey;
   /** Pair address */
   pairAddress: PublicKey;
   /** LP token mint address */
   lpTokenMint: PublicKey;
   /** Pair authority PDA */
   pairAuthority: PublicKey;
+  /** Signers required for the transaction */
+  signers: Keypair[];
 }
+
+
 
 /**
  * Parameters for adding liquidity to a pool
@@ -120,13 +131,17 @@ export interface AddLiquidityParams {
   /** Desired amount of LP tokens to receive */
   poolTokenAmount: bigint;
   /** Maximum amount of token A willing to deposit (slippage protection) */
-  maximumTokenAAmount: bigint;
+  maximumTokenA: bigint;
   /** Maximum amount of token B willing to deposit (slippage protection) */
-  maximumTokenBAmount: bigint;
-  /** Optional: User's token A account (will derive ATA if not provided) */
-  userTokenAAccount?: PublicKey;
-  /** Optional: User's token B account (will derive ATA if not provided) */
-  userTokenBAccount?: PublicKey;
+  maximumTokenB: bigint;
+  /** Optional: User's token A account (defaults to ATA) */
+  userTokenX?: PublicKey;
+  /** Optional: User's token B account (defaults to ATA) */
+  userTokenY?: PublicKey;
+  /** Optional: User's LP token account (defaults to ATA) */
+  userLpToken?: PublicKey;
+  /** Optional: existing transaction to append to */
+  transaction?: Transaction;
 }
 
 /**
@@ -138,11 +153,15 @@ export interface RemoveLiquidityParams {
   /** Amount of LP tokens to burn */
   poolTokenAmount: bigint;
   /** Minimum amount of token A to receive (slippage protection) */
-  minimumTokenAAmount: bigint;
+  minimumTokenA: bigint;
   /** Minimum amount of token B to receive (slippage protection) */
-  minimumTokenBAmount: bigint;
-  /** Optional: User's token A account (will derive ATA if not provided) */
-  userTokenAAccount?: PublicKey;
-  /** Optional: User's token B account (will derive ATA if not provided) */
-  userTokenBAccount?: PublicKey;
+  minimumTokenB: bigint;
+  /** Optional: User's token A account (defaults to ATA) */
+  userTokenX?: PublicKey;
+  /** Optional: User's token B account (defaults to ATA) */
+  userTokenY?: PublicKey;
+  /** Optional: User's LP token account (defaults to ATA) */
+  userLpToken?: PublicKey;
+  /** Optional: existing transaction to append to */
+  transaction?: Transaction;
 }

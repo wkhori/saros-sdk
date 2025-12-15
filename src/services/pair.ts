@@ -107,7 +107,6 @@ export class SarosAMMPair extends SarosBaseService {
     console.log('💡 Calculating rent-exempt balances...');
     const swapAccountRent = await this.connection.getMinimumBalanceForRentExemption(SWAP_ACCOUNT_SIZE);
     const mintRent = await this.connection.getMinimumBalanceForRentExemption(spl.MINT_SIZE);
-    const tokenAccountRent = await this.connection.getMinimumBalanceForRentExemption(spl.ACCOUNT_SIZE);
 
     console.log('💡 Building transaction...');
     const tx = new Transaction();

@@ -49,3 +49,45 @@ export function getMinOutputWithSlippage(amount: bigint, slippagePercent: number
   const slippageBps = BigInt(Math.floor(slippagePercent * 100));
   return (amount * (10000n - slippageBps)) / 10000n;
 }
+
+/**
+ * Calculate required token amounts for desired LP tokens
+ * Formula: tokenA = (desiredLP * reserveA) / totalLP
+ *          tokenB = (desiredLP * reserveB) / totalLP
+ */
+export function calculateAddLiquidityAmounts(
+  desiredLpTokens: bigint,
+  reserveA: bigint,
+  reserveB: bigint,
+  totalLpSupply: bigint
+): { tokenARequired: bigint; tokenBRequired: bigint } {
+  if (totalLpSupply === 0n) {
+    throw new Error('Pool has no liquidity');
+  }
+
+  const tokenARequired = (desiredLpTokens * reserveA) / totalLpSupply;
+  const tokenBRequired = (desiredLpTokens * reserveB) / totalLpSupply;
+
+  return { tokenARequired, tokenBRequired };
+}
+
+/**
+ * Calculate expected token amounts from burning LP tokens
+ * Formula: tokenA = (lpToBurn * reserveA) / totalLP
+ *          tokenB = (lpToBurn * reserveB) / totalLP
+ */
+export function calculateRemoveLiquidityAmounts(
+  lpTokensToBurn: bigint,
+  reserveA: bigint,
+  reserveB: bigint,
+  totalLpSupply: bigint
+): { tokenAExpected: bigint; tokenBExpected: bigint } {
+  if (totalLpSupply === 0n) {
+    throw new Error('Pool has no liquidity');
+  }
+
+  const tokenAExpected = (lpTokensToBurn * reserveA) / totalLpSupply;
+  const tokenBExpected = (lpTokensToBurn * reserveB) / totalLpSupply;
+
+  return { tokenAExpected, tokenBExpected };
+}

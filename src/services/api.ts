@@ -4,9 +4,9 @@
  * Wraps the Saros REST API endpoints for farm and stake data.
  * Includes fallback handling for when the API is unavailable.
  *
- * ⚠️ WARNING: This service is tightly coupled to the Saros API schema.
- * Any changes to https://api.saros.xyz response structure will break this code.
- * Update SarosAPIFarmInfo and SarosAPIStakeInfo interfaces if the API changes.
+ * ⚠️ WARNING: This service is tightly coupled to the Saros API schemas.
+ * Any changes to https://api.saros.xyz response structure will break this code 
+ * and require updates to SarosAPIFarmInfo and SarosAPIStakeInfo interfaces.
  */
 
 const SAROS_API_BASE = 'https://api.saros.xyz/api/saros';

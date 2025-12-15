@@ -1,11 +1,11 @@
 import { createMint, getOrCreateAssociatedTokenAccount, mintTo } from '@solana/spl-token';
-import { Connection, Keypair, PublicKey } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey, sendAndConfirmTransaction } from '@solana/web3.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { SarosAMMPair } from '../../services/pair';
 import { MODE } from '../../constants/config';
 import { SwapCurveType } from '../../types';
-import { waitForConfirmation } from './test-util';
+// import { waitForConfirmation } from './test-util';
 
 export interface TestToken {
   name: string;
@@ -29,21 +29,29 @@ export async function ensureAMMTokenAndPool(
   connection: Connection,
   payer: Keypair
 ): Promise<{ tokenA: TestToken; tokenB: TestToken; pool: TestAMMPool }> {
+  // Try to load existing tokens and pool
   if (fs.existsSync(AMM_TOKENS_FILE)) {
-    const saved = JSON.parse(fs.readFileSync(AMM_TOKENS_FILE, 'utf8'));
-    return {
-      tokenA: { ...saved.tokenA, mint: new PublicKey(saved.tokenA.mint) },
-      tokenB: { ...saved.tokenB, mint: new PublicKey(saved.tokenB.mint) },
-      pool: {
-        ...saved.pool,
-        pair: new PublicKey(saved.pool.pair),
-        tokenA: new PublicKey(saved.pool.tokenA),
-        tokenB: new PublicKey(saved.pool.tokenB),
-        lpMint: new PublicKey(saved.pool.lpMint),
-      },
-    };
+    try {
+      const saved = JSON.parse(fs.readFileSync(AMM_TOKENS_FILE, 'utf8'));
+
+      return {
+        tokenA: { ...saved.tokenA, mint: new PublicKey(saved.tokenA.mint) },
+        tokenB: { ...saved.tokenB, mint: new PublicKey(saved.tokenB.mint) },
+        pool: {
+          ...saved.pool,
+          pair: new PublicKey(saved.pool.pair),
+          tokenA: new PublicKey(saved.pool.tokenA),
+          tokenB: new PublicKey(saved.pool.tokenB),
+          lpMint: new PublicKey(saved.pool.lpMint),
+        },
+      };
+    } catch (_error) {
+      console.log('⚠️  Failed to load saved data, creating new tokens and pool...');
+
+    }
   }
 
+  // Create new tokens
   console.log('Creating AMM test token A (9 decimals)...');
   const tokenAMint = await createMint(connection, payer, payer.publicKey, null, 9);
   const ataA = await getOrCreateAssociatedTokenAccount(connection, payer, tokenAMint, payer.publicKey);
@@ -70,6 +78,7 @@ export async function ensureAMMTokenAndPool(
     supply: 1_000_000,
   };
 
+  // Create new pool
   console.log('Creating AMM pair...');
   const ammPair = new SarosAMMPair({ mode: MODE.DEVNET, connection }, PublicKey.default);
   const result = await ammPair.createPair({
@@ -82,7 +91,12 @@ export async function ensureAMMTokenAndPool(
     curveType: SwapCurveType.ConstantProduct,
   });
 
-  await waitForConfirmation(await connection.sendTransaction(result.transaction, [payer]), connection);
+  // Sign and send transaction
+  console.log('Sending transaction to create AMM pair...');
+const sig = await sendAndConfirmTransaction(connection, result.transaction, [payer, ...result.signers]);
+  console.log('✅ AMM Pair created! Transaction signature:', sig);
+  console.log('🔗 View on explorer:', `https://explorer.solana.com/tx/${sig}?cluster=devnet`);
+  // await waitForConfirmation(sig, connection);
 
   const pool: TestAMMPool = {
     pair: result.pairAddress,
@@ -92,6 +106,7 @@ export async function ensureAMMTokenAndPool(
     curveType: 'ConstantProduct',
   };
 
+  // Save both tokens and pool for reuse
   fs.mkdirSync(path.dirname(AMM_TOKENS_FILE), { recursive: true });
   fs.writeFileSync(
     AMM_TOKENS_FILE,
