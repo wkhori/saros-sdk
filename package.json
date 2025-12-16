@@ -42,15 +42,12 @@
     "@coral-xyz/anchor": "0.31.1",
     "@solana/spl-token": "0.4.13",
     "@solana/web3.js": "1.98.4",
-    "bs58": "^6.0.0",
-    "lodash": "^4.17.21"
+    "bn.js": "^5.2.2"
   },
   "devDependencies": {
-    "@types/lodash": "^4.17.20",
     "@types/node": "^22.18.3",
     "@typescript-eslint/eslint-plugin": "^8.44.0",
     "@typescript-eslint/parser": "^8.44.0",
-    "@vitest/ui": "^4.0.8",
     "eslint": "^9.35.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.6.2",
