@@ -1,5 +1,5 @@
 {
-  "name": "@saros-finance/amm-sdk",
+  "name": "@saros-finance/sdk",
   "version": "3.0.0",
   "type": "module",
   "description": "Saros AMM - the engine that powers the Internet Capital Market on Solana.",

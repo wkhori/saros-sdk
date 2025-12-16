@@ -3,7 +3,7 @@ import { AnchorProvider, Program, Wallet, BN } from '@coral-xyz/anchor';
 import * as spl from '@solana/spl-token';
 import { FARM_PROGRAM_IDS } from '../constants/config';
 import { FARM_IDL } from '../constants/idl/farm';
-import { SarosAPIService, type SarosAPIFarmInfo, type SarosAPIStakeInfo } from './api';
+import { SarosAPIService } from './api';
 import { SarosAMMError } from '../utils/errors';
 import {
   deriveFarmUserPoolAddress,
@@ -12,6 +12,7 @@ import {
   deriveFarmPoolRewardAuthority,
 } from '../utils/pda';
 import type { PoolAccount, StakeParams, UnstakeParams, ClaimRewardParams, UserPosition } from '../types/farm';
+import type { SarosAPIFarmInfo, SarosAPIStakeInfo } from '../types/api';
 import { SarosAMMConfig } from './base';
 
 /**

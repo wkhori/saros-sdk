@@ -1,84 +1,11 @@
+import type { SarosAPIFarmInfo, SarosAPIStakeInfo } from '../types/api';
+
 /**
  * Thin client for Saros' public REST API (`api.saros.xyz`).
  * The response types are schema-coupled; if the API payload changes, update
  * `SarosAPIFarmInfo` / `SarosAPIStakeInfo`.
  */
-
 const SAROS_API_BASE = 'https://api.saros.xyz/api/saros';
-
-export interface SarosAPIFarmInfo {
-  isAmountBase: boolean;
-  volume24h: number;
-  feeAPR: number;
-  rewards: Array<{
-    poolRewardAddress: string;
-    rewardTokenMint: string;
-    rewardPerBlock: string;
-    rewardTokenAccount: string;
-    rewardEndBlock: string;
-    totalShares: string;
-    accumulatedRewardPerShare: string;
-    lastUpdatedBlock: string;
-    authorityAddress: string;
-  }>;
-  dataPoolInfo: {
-    mint: string;
-    owner: string;
-    amount: string;
-  };
-  poolAddress: string;
-  poolLpAddress?: string;
-  startBlock: number;
-  endBlock: number;
-  lpInfo?: {
-    address: string;
-    supply: string;
-    decimals: number;
-    mintAuthority: string;
-  };
-  infoPoolLiquidity?: {
-    lpTokenMint: string;
-    token0Mint: string;
-    token0Account: {
-      mint: string;
-      owner: string;
-      amount: string;
-      address: string;
-    };
-    token1Mint: string;
-    token1Account: {
-      mint: string;
-      owner: string;
-      amount: string;
-      address: string;
-    };
-  };
-}
-
-export interface SarosAPIStakeInfo {
-  isAmountBase: boolean;
-  volume24h: number;
-  feeAPR: number;
-  rewards: Array<{
-    poolRewardAddress: string;
-    rewardTokenMint: string;
-    rewardPerBlock: string;
-    rewardTokenAccount: string;
-    rewardEndBlock: string;
-    totalShares: string;
-    accumulatedRewardPerShare: string;
-    lastUpdatedBlock: string;
-    authorityAddress: string;
-  }>;
-  dataPoolInfo: {
-    mint: string;
-    owner: string;
-    amount: string;
-  };
-  poolAddress: string;
-  startBlock: number;
-  endBlock: number;
-}
 
 interface SarosAPIResponse<T> {
   status: number;
