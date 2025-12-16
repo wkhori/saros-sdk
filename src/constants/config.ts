@@ -33,10 +33,14 @@ export const FARM_PROGRAM_IDS: Record<MODE, PublicKey> = {
   [MODE.DEVNET]: new PublicKey('SFFxHvYKTBgC7XYEZDua6m28NZo9fNnDRCEtM7AHR4m'),
 };
 
-// Legacy Saros swap account size
+/**
+ * Legacy Saros swap account size.
+ */
 export const SWAP_ACCOUNT_SIZE = 324;
 
-// Default fees for AMM pairs
+/**
+ * Default fees for AMM pairs.
+ */
 export const DEFAULT_FEES = {
   tradeFeeNumerator: new BN(0),
   tradeFeeDenominator: new BN(10000),
@@ -62,5 +66,7 @@ export const CURVE_TYPE_MAP: Record<SwapCurveType, any> = {
   [SwapCurveType.Offset]: { offset: {} },
 };
 
-// Default swap calculator (32 bytes of zero)
+/**
+ * Default swap calculator (32 bytes of zero).
+ */
 export const DEFAULT_SWAP_CALCULATOR = Array.from(new Uint8Array(32));
