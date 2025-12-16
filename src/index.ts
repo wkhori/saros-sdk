@@ -1,4 +1,5 @@
 // Main exports
+export { SarosAMM } from './services';
 export { SarosAMMPair } from './services/pair';
 export { SarosBaseService, type SarosAMMConfig } from './services/base';
 export { SarosFarm, type PoolType } from './services/farm';

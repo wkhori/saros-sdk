@@ -102,6 +102,7 @@ export class SarosAMMPair extends SarosBaseService {
       const feeAccount = await spl.getAssociatedTokenAddress(lpMintKeypair.publicKey, feeOwner);
       const userTokenA = await spl.getAssociatedTokenAddress(tokenAMint, payer);
       const userTokenB = await spl.getAssociatedTokenAddress(tokenBMint, payer);
+      const shouldCreateFeeAccountAta = !feeAccount.equals(userLpTokenAccount);
 
       console.log('💡 Calculating rent-exempt balances...');
       const swapAccountRent = await this.connection.getMinimumBalanceForRentExemption(SWAP_ACCOUNT_SIZE);
@@ -135,11 +136,17 @@ export class SarosAMMPair extends SarosBaseService {
 
       // 3️⃣ Create user LP token ATA
       console.log('💡 Adding user LP token ATA creation...');
-      tx.add(spl.createAssociatedTokenAccountInstruction(payer, userLpTokenAccount, payer, lpMintKeypair.publicKey));
+      tx.add(
+        spl.createAssociatedTokenAccountIdempotentInstruction(payer, userLpTokenAccount, payer, lpMintKeypair.publicKey)
+      );
 
       // 4️⃣ Create fee account ATA
       console.log('💡 Adding fee account ATA creation...');
-      tx.add(spl.createAssociatedTokenAccountInstruction(payer, feeAccount, feeOwner, lpMintKeypair.publicKey));
+      if (shouldCreateFeeAccountAta) {
+        tx.add(
+          spl.createAssociatedTokenAccountIdempotentInstruction(payer, feeAccount, feeOwner, lpMintKeypair.publicKey)
+        );
+      }
 
       // 6️⃣ Transfer initial liquidity to pool
       console.log('💡 Adding initial liquidity transfer...');
