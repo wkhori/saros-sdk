@@ -20,8 +20,8 @@ export class SarosAMM extends SarosBaseService {
   }
 
   /**
-   * Create a new Saros AMM pool. Returns the unsigned transaction and helper
-   * metadata but does not submit anything to the cluster.
+   * Create a new Saros AMM pool. 
+   * Returns the transaction and helper metadata for signing and sending.
    */
   public async createPair(params: CreatePairParams): Promise<CreatePairResult> {
     try {

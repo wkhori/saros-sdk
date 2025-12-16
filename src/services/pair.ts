@@ -10,8 +10,6 @@ import {
   SwapParams,
   SwapCurveType,
   FeeMetadata,
-  CreatePairParams,
-  CreatePairResult,
   AddLiquidityParams,
   RemoveLiquidityParams,
 } from '../types';
@@ -19,7 +17,6 @@ import { calculateSwapOutput, calculatePriceImpact, getMinOutputWithSlippage } f
 import { derivePoolAuthority } from '../utils/pda';
 import { SarosAMMError } from '../utils/errors';
 import { decodePairAccount } from '../utils/legacyAccountDecoder';
-import { buildCreatePairTransaction } from './createPair';
 
 export class SarosAMMPair extends SarosBaseService {
   private pairAddress: PublicKey;
@@ -81,18 +78,6 @@ export class SarosAMMPair extends SarosBaseService {
       this.metadata = await this.buildPairMetadata();
     } catch (error) {
       SarosAMMError.handleError(error, SarosAMMError.PairFetchFailed());
-    }
-  }
-
-  public async createPair(params: CreatePairParams): Promise<CreatePairResult> {
-    try {
-      return await buildCreatePairTransaction({
-        connection: this.connection,
-        ammProgram: this.ammProgram,
-        params,
-      });
-    } catch (error) {
-      SarosAMMError.handleError(error, SarosAMMError.PairCreationFailed());
     }
   }
 
