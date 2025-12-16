@@ -10,9 +10,6 @@ export default defineConfig(({ mode }) => ({
       'node_modules',
       'dist',
       'test-data',
-      // Exclude cleanup test from normal test run
-      // add comment to line below and run pnpm test:cleanup to reclaim devnet sol after testing
-      'src/tests/integration/batch-close-positions.test.ts',
     ],
     testTimeout: 60000,
     hookTimeout: 60000,

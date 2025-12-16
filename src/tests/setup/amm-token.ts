@@ -5,7 +5,6 @@ import * as path from 'path';
 import { SarosAMM } from '../../services';
 import { MODE } from '../../constants/config';
 import { SwapCurveType } from '../../types';
-// import { waitForConfirmation } from './test-util';
 
 export interface TestToken {
   name: string;
@@ -25,30 +24,47 @@ export interface TestAMMPool {
 
 const AMM_TOKENS_FILE = path.join(process.cwd(), 'test-data/amm-test-tokens.json');
 
+let ensureInFlight: Promise<{ tokenA: TestToken; tokenB: TestToken; pool: TestAMMPool }> | null = null;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function readSavedEnv(): { tokenA: TestToken; tokenB: TestToken; pool: TestAMMPool } | null {
+  if (!fs.existsSync(AMM_TOKENS_FILE)) return null;
+  const saved = JSON.parse(fs.readFileSync(AMM_TOKENS_FILE, 'utf8'));
+  return {
+    tokenA: { ...saved.tokenA, mint: new PublicKey(saved.tokenA.mint) },
+    tokenB: { ...saved.tokenB, mint: new PublicKey(saved.tokenB.mint) },
+    pool: {
+      ...saved.pool,
+      pair: new PublicKey(saved.pool.pair),
+      tokenA: new PublicKey(saved.pool.tokenA),
+      tokenB: new PublicKey(saved.pool.tokenB),
+      lpMint: new PublicKey(saved.pool.lpMint),
+    },
+  };
+}
+
 export async function ensureAMMTokenAndPool(
   connection: Connection,
   payer: Keypair
 ): Promise<{ tokenA: TestToken; tokenB: TestToken; pool: TestAMMPool }> {
-  // Try to load existing tokens and pool
-  if (fs.existsSync(AMM_TOKENS_FILE)) {
-    try {
-      const saved = JSON.parse(fs.readFileSync(AMM_TOKENS_FILE, 'utf8'));
+  // Prevent concurrent creation across multiple integration test files.
+  if (ensureInFlight) return ensureInFlight;
 
-      return {
-        tokenA: { ...saved.tokenA, mint: new PublicKey(saved.tokenA.mint) },
-        tokenB: { ...saved.tokenB, mint: new PublicKey(saved.tokenB.mint) },
-        pool: {
-          ...saved.pool,
-          pair: new PublicKey(saved.pool.pair),
-          tokenA: new PublicKey(saved.pool.tokenA),
-          tokenB: new PublicKey(saved.pool.tokenB),
-          lpMint: new PublicKey(saved.pool.lpMint),
-        },
-      };
-    } catch (_error) {
-      console.log('⚠️  Failed to load saved data, creating new tokens and pool...');
+  ensureInFlight = (async () => {
+    // Try to load existing tokens and pool (retry in case another test is mid-write)
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const loaded = readSavedEnv();
+        if (loaded) return loaded;
+      } catch {
+        await sleep(250 * (attempt + 1));
+      }
     }
-  }
+
+    console.log('⚠️  Failed to load saved data, creating new tokens and pool...');
 
   // Create new tokens
   console.log('Creating AMM test token A (9 decimals)...');
@@ -94,7 +110,6 @@ export async function ensureAMMTokenAndPool(
   const sig = await sendAndConfirmTransaction(connection, result.transaction, [payer, ...result.signers]);
   console.log('✅ AMM Pair created! Transaction signature:', sig);
   console.log('🔗 View on explorer:', `https://explorer.solana.com/tx/${sig}?cluster=devnet`);
-  // await waitForConfirmation(sig, connection);
 
   const pool: TestAMMPool = {
     pair: result.pairAddress,
@@ -106,24 +121,31 @@ export async function ensureAMMTokenAndPool(
 
   // Save both tokens and pool for reuse
   fs.mkdirSync(path.dirname(AMM_TOKENS_FILE), { recursive: true });
-  fs.writeFileSync(
-    AMM_TOKENS_FILE,
-    JSON.stringify(
-      {
-        tokenA: { ...tokenA, mint: tokenA.mint.toBase58() },
-        tokenB: { ...tokenB, mint: tokenB.mint.toBase58() },
-        pool: {
-          ...pool,
-          pair: pool.pair.toBase58(),
-          tokenA: pool.tokenA.toBase58(),
-          tokenB: pool.tokenB.toBase58(),
-          lpMint: pool.lpMint.toBase58(),
-        },
+  const serialized = JSON.stringify(
+    {
+      tokenA: { ...tokenA, mint: tokenA.mint.toBase58() },
+      tokenB: { ...tokenB, mint: tokenB.mint.toBase58() },
+      pool: {
+        ...pool,
+        pair: pool.pair.toBase58(),
+        tokenA: pool.tokenA.toBase58(),
+        tokenB: pool.tokenB.toBase58(),
+        lpMint: pool.lpMint.toBase58(),
       },
-      null,
-      2
-    )
+    },
+    null,
+    2
   );
+  const tmp = `${AMM_TOKENS_FILE}.${Date.now()}.tmp`;
+  fs.writeFileSync(tmp, serialized);
+  fs.renameSync(tmp, AMM_TOKENS_FILE);
 
-  return { tokenA, tokenB, pool };
+    return { tokenA, tokenB, pool };
+  })();
+
+  try {
+    return await ensureInFlight;
+  } finally {
+    ensureInFlight = null;
+  }
 }

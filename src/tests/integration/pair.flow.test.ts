@@ -7,7 +7,7 @@ import { loadOrCreateWallet } from '../setup/wallet';
 import { ensureAMMTokenAndPool } from '../setup/amm-token';
 import { getTokenBalance } from '../setup/test-util';
 
-const RPC_ENDPOINT = process.env.DEVNET_RPC_URL || 'https://api.mainnet-beta.solana.com';
+const RPC_ENDPOINT = process.env.DEVNET_RPC_URL || 'https://api.devnet.solana.com';
 
 describe('AMM Pair Full Flow (Devnet)', () => {
   let connection: Connection;

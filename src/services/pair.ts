@@ -169,45 +169,47 @@ export class SarosAMMPair extends SarosBaseService {
    * });
    */
   public async swap(params: SwapParams): Promise<Transaction> {
-    const { amount, minAmountOut, swapForY, payer, transaction } = params;
+    try {
+      const { amount, minAmountOut, swapForY, payer, transaction } = params;
 
-    if (amount <= 0n) throw SarosAMMError.ZeroAmount();
-    if (minAmountOut < 0n) throw SarosAMMError.InvalidSlippage();
+      if (amount <= 0n) throw SarosAMMError.ZeroAmount();
+      if (minAmountOut < 0n) throw SarosAMMError.InvalidSlippage();
 
-    const tx = transaction || new Transaction();
+      const tx = transaction || new Transaction();
 
-    const { tokenAMint, tokenBMint, tokenA, tokenB, poolMint } = this.pairAccount;
+      const { tokenAMint, tokenBMint, tokenA, tokenB, poolMint } = this.pairAccount;
 
-    // Get or create user token accounts
-    const userTokenA = params.userTokenX || (await spl.getAssociatedTokenAddress(tokenAMint, payer, true));
+      // Get or create user token accounts
+      const userTokenA = params.userTokenX || (await spl.getAssociatedTokenAddress(tokenAMint, payer, true));
+      const userTokenB = params.userTokenY || (await spl.getAssociatedTokenAddress(tokenBMint, payer, true));
 
-    const userTokenB = params.userTokenY || (await spl.getAssociatedTokenAddress(tokenBMint, payer, true));
+      // Determine source and destination based on swap direction
+      const [sourceToken, destToken, poolSource, poolDest] = swapForY
+        ? [userTokenA, userTokenB, tokenA, tokenB]
+        : [userTokenB, userTokenA, tokenB, tokenA];
 
-    // Determine source and destination based on swap direction
-    const [sourceToken, destToken, poolSource, poolDest] = swapForY
-      ? [userTokenA, userTokenB, tokenA, tokenB]
-      : [userTokenB, userTokenA, tokenB, tokenA];
+      // Build swap instruction
+      const swapIx = await this.ammProgram.methods
+        .swap(new BN(amount.toString()), new BN(minAmountOut.toString()))
+        .accountsPartial({
+          swapInfo: this.pairAddress,
+          authorityInfo: this.poolAuthority,
+          userTransferAuthorityInfo: payer,
+          sourceInfo: sourceToken,
+          swapSourceInfo: poolSource,
+          swapDestinationInfo: poolDest,
+          destinationInfo: destToken,
+          poolMintInfo: poolMint,
+          poolFeeAccountInfo: this.pairAccount.poolFeeAccount,
+          tokenProgramInfo: spl.TOKEN_PROGRAM_ID,
+        })
+        .instruction();
 
-    // Build swap instruction
-    const swapIx = await this.ammProgram.methods
-      .swap(new BN(amount.toString()), new BN(minAmountOut.toString()))
-      .accountsPartial({
-        swapInfo: this.pairAddress,
-        authorityInfo: this.poolAuthority,
-        userTransferAuthorityInfo: payer,
-        sourceInfo: sourceToken,
-        swapSourceInfo: poolSource,
-        swapDestinationInfo: poolDest,
-        destinationInfo: destToken,
-        poolMintInfo: poolMint,
-        poolFeeAccountInfo: this.pairAccount.poolFeeAccount,
-        tokenProgramInfo: spl.TOKEN_PROGRAM_ID,
-      })
-      .instruction();
-
-    tx.add(swapIx);
-
-    return tx;
+      tx.add(swapIx);
+      return tx;
+    } catch (error) {
+      SarosAMMError.handleError(error, SarosAMMError.SwapFailed());
+    }
   }
 
   /**
@@ -230,48 +232,45 @@ export class SarosAMMPair extends SarosBaseService {
    * const signature = await connection.sendTransaction(tx, [wallet]);
    */
   public async addLiquidity(params: AddLiquidityParams): Promise<Transaction> {
-    const { poolTokenAmount, maximumTokenA, maximumTokenB, payer, transaction } = params;
+    try {
+      const { poolTokenAmount, maximumTokenA, maximumTokenB, payer, transaction } = params;
 
-    // 1. Validate inputs
-    if (poolTokenAmount <= 0n) throw SarosAMMError.ZeroAmount();
-    if (maximumTokenA <= 0n || maximumTokenB <= 0n) throw SarosAMMError.InvalidSlippage();
+      if (poolTokenAmount <= 0n) throw SarosAMMError.ZeroAmount();
+      if (maximumTokenA <= 0n || maximumTokenB <= 0n) throw SarosAMMError.InvalidSlippage();
 
-    // 2. Create or use existing transaction
-    const tx = transaction || new Transaction();
+      const tx = transaction || new Transaction();
 
-    // 3. Get pool account data
-    const { tokenAMint, tokenBMint, tokenA, tokenB, poolMint } = this.pairAccount;
+      const { tokenAMint, tokenBMint, tokenA, tokenB, poolMint } = this.pairAccount;
 
-    // 4. Get or derive user token accounts (use ATAs like swap does)
-    const userTokenA = params.userTokenX || (await spl.getAssociatedTokenAddress(tokenAMint, payer, true));
-    const userTokenB = params.userTokenY || (await spl.getAssociatedTokenAddress(tokenBMint, payer, true));
-    const userLpToken = params.userLpToken || (await spl.getAssociatedTokenAddress(poolMint, payer, true));
+      const userTokenA = params.userTokenX || (await spl.getAssociatedTokenAddress(tokenAMint, payer, true));
+      const userTokenB = params.userTokenY || (await spl.getAssociatedTokenAddress(tokenBMint, payer, true));
+      const userLpToken = params.userLpToken || (await spl.getAssociatedTokenAddress(poolMint, payer, true));
 
-    // 5. Build Anchor instruction (like swap does)
-    const depositIx = await this.ammProgram.methods
-      .depositAllTokenTypes(
-        new BN(poolTokenAmount.toString()),
-        new BN(maximumTokenA.toString()),
-        new BN(maximumTokenB.toString())
-      )
-      .accountsPartial({
-        swapInfo: this.pairAddress,
-        authorityInfo: this.poolAuthority,
-        userTransferAuthorityInfo: payer,
-        sourceAInfo: userTokenA,
-        sourceBInfo: userTokenB,
-        tokenAInfo: tokenA,
-        tokenBInfo: tokenB,
-        poolMintInfo: poolMint,
-        destInfo: userLpToken,
-        tokenProgramInfo: spl.TOKEN_PROGRAM_ID,
-      })
-      .instruction();
+      const depositIx = await this.ammProgram.methods
+        .depositAllTokenTypes(
+          new BN(poolTokenAmount.toString()),
+          new BN(maximumTokenA.toString()),
+          new BN(maximumTokenB.toString())
+        )
+        .accountsPartial({
+          swapInfo: this.pairAddress,
+          authorityInfo: this.poolAuthority,
+          userTransferAuthorityInfo: payer,
+          sourceAInfo: userTokenA,
+          sourceBInfo: userTokenB,
+          tokenAInfo: tokenA,
+          tokenBInfo: tokenB,
+          poolMintInfo: poolMint,
+          destInfo: userLpToken,
+          tokenProgramInfo: spl.TOKEN_PROGRAM_ID,
+        })
+        .instruction();
 
-    tx.add(depositIx);
-
-    // 6. Return transaction (user signs and sends)
-    return tx;
+      tx.add(depositIx);
+      return tx;
+    } catch (error) {
+      SarosAMMError.handleError(error, SarosAMMError.AddLiquidityFailed());
+    }
   }
 
   /**
@@ -293,49 +292,46 @@ export class SarosAMMPair extends SarosBaseService {
    * const signature = await connection.sendTransaction(tx, [wallet]);
    */
   public async removeLiquidity(params: RemoveLiquidityParams): Promise<Transaction> {
-    const { poolTokenAmount, minimumTokenA, minimumTokenB, payer, transaction } = params;
+    try {
+      const { poolTokenAmount, minimumTokenA, minimumTokenB, payer, transaction } = params;
 
-    // 1. Validate inputs
-    if (poolTokenAmount <= 0n) throw SarosAMMError.ZeroAmount();
-    if (minimumTokenA < 0n || minimumTokenB < 0n) throw SarosAMMError.InvalidSlippage();
+      if (poolTokenAmount <= 0n) throw SarosAMMError.ZeroAmount();
+      if (minimumTokenA < 0n || minimumTokenB < 0n) throw SarosAMMError.InvalidSlippage();
 
-    // 2. Create or use existing transaction
-    const tx = transaction || new Transaction();
+      const tx = transaction || new Transaction();
 
-    // 3. Get pool account data
-    const { tokenAMint, tokenBMint, tokenA, tokenB, poolMint, poolFeeAccount } = this.pairAccount;
+      const { tokenAMint, tokenBMint, tokenA, tokenB, poolMint, poolFeeAccount } = this.pairAccount;
 
-    // 4. Get or derive user token accounts (use ATAs like swap does)
-    const userTokenA = params.userTokenX || (await spl.getAssociatedTokenAddress(tokenAMint, payer, true));
-    const userTokenB = params.userTokenY || (await spl.getAssociatedTokenAddress(tokenBMint, payer, true));
-    const userLpToken = params.userLpToken || (await spl.getAssociatedTokenAddress(poolMint, payer, true));
+      const userTokenA = params.userTokenX || (await spl.getAssociatedTokenAddress(tokenAMint, payer, true));
+      const userTokenB = params.userTokenY || (await spl.getAssociatedTokenAddress(tokenBMint, payer, true));
+      const userLpToken = params.userLpToken || (await spl.getAssociatedTokenAddress(poolMint, payer, true));
 
-    // 5. Build Anchor instruction (like swap does)
-    const withdrawIx = await this.ammProgram.methods
-      .withdrawAllTokenTypes(
-        new BN(poolTokenAmount.toString()),
-        new BN(minimumTokenA.toString()),
-        new BN(minimumTokenB.toString())
-      )
-      .accountsPartial({
-        swapInfo: this.pairAddress,
-        authorityInfo: this.poolAuthority,
-        userTransferAuthorityInfo: payer,
-        poolMintInfo: poolMint,
-        sourceInfo: userLpToken,
-        tokenAInfo: tokenA,
-        tokenBInfo: tokenB,
-        destTokenAInfo: userTokenA,
-        destTokenBInfo: userTokenB,
-        poolFeeAccountInfo: poolFeeAccount,
-        tokenProgramInfo: spl.TOKEN_PROGRAM_ID,
-      })
-      .instruction();
+      const withdrawIx = await this.ammProgram.methods
+        .withdrawAllTokenTypes(
+          new BN(poolTokenAmount.toString()),
+          new BN(minimumTokenA.toString()),
+          new BN(minimumTokenB.toString())
+        )
+        .accountsPartial({
+          swapInfo: this.pairAddress,
+          authorityInfo: this.poolAuthority,
+          userTransferAuthorityInfo: payer,
+          poolMintInfo: poolMint,
+          sourceInfo: userLpToken,
+          tokenAInfo: tokenA,
+          tokenBInfo: tokenB,
+          destTokenAInfo: userTokenA,
+          destTokenBInfo: userTokenB,
+          poolFeeAccountInfo: poolFeeAccount,
+          tokenProgramInfo: spl.TOKEN_PROGRAM_ID,
+        })
+        .instruction();
 
-    tx.add(withdrawIx);
-
-    // 6. Return transaction (user signs and sends)
-    return tx;
+      tx.add(withdrawIx);
+      return tx;
+    } catch (error) {
+      SarosAMMError.handleError(error, SarosAMMError.RemoveLiquidityFailed());
+    }
   }
 
   // -----------------------------------------------------------------------------

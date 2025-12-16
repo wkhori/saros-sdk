@@ -4,6 +4,7 @@ import { SarosAMMPair } from './pair';
 import type { CreatePairParams, CreatePairResult } from '../types';
 import { SWAP_ACCOUNT_SIZE } from '../constants/config';
 import { buildCreatePairTransaction } from './createPair';
+import { SarosAMMError } from '../utils/errors';
 
 const TOKEN_A_MINT_OFFSET = 131;
 const TOKEN_B_MINT_OFFSET = TOKEN_A_MINT_OFFSET + 32;
@@ -22,12 +23,16 @@ export class SarosAMM extends SarosBaseService {
    * Create a new Saros AMM pool. Returns the unsigned transaction and helper
    * metadata but does not submit anything to the cluster.
    */
-  public createPair(params: CreatePairParams): Promise<CreatePairResult> {
-    return buildCreatePairTransaction({
-      connection: this.connection,
-      ammProgram: this.ammProgram,
-      params,
-    });
+  public async createPair(params: CreatePairParams): Promise<CreatePairResult> {
+    try {
+      return await buildCreatePairTransaction({
+        connection: this.connection,
+        ammProgram: this.ammProgram,
+        params,
+      });
+    } catch (error) {
+      SarosAMMError.handleError(error, SarosAMMError.PairCreationFailed());
+    }
   }
 
   /**

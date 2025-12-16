@@ -8,7 +8,7 @@ import type { TestToken, TestAMMPool } from '../setup/amm-token';
 
 // Use devnet for integration tests
 // Configure RPC endpoints in .env.test file
-const RPC_ENDPOINT = process.env.DEVNET_RPC_URL || 'https://api.mainnet-beta.solana.com';
+const RPC_ENDPOINT = process.env.DEVNET_RPC_URL || 'https://api.devnet.solana.com';
 
 describe('AMM Pair Integration Tests', () => {
   let connection: Connection;

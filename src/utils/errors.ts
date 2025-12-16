@@ -4,6 +4,9 @@ export enum SarosAMMErrorCode {
   PairNotInitialized = 'PAIR_NOT_INITIALIZED',
   PairFetchFailed = 'PAIR_FETCH_FAILED',
   PairCreationFailed = 'PAIR_CREATION_FAILED',
+  SwapFailed = 'SWAP_FAILED',
+  AddLiquidityFailed = 'ADD_LIQUIDITY_FAILED',
+  RemoveLiquidityFailed = 'REMOVE_LIQUIDITY_FAILED',
   QuoteCalculationFailed = 'QUOTE_CALCULATION_FAILED',
   ZeroAmount = 'ZERO_AMOUNT',
   InvalidSlippage = 'INVALID_SLIPPAGE',
@@ -42,6 +45,18 @@ export class SarosAMMError extends Error {
 
   static PairCreationFailed(): SarosAMMError {
     return new SarosAMMError('Failed to create pair', SarosAMMErrorCode.PairCreationFailed);
+  }
+
+  static SwapFailed(): SarosAMMError {
+    return new SarosAMMError('Failed to build swap transaction', SarosAMMErrorCode.SwapFailed);
+  }
+
+  static AddLiquidityFailed(): SarosAMMError {
+    return new SarosAMMError('Failed to build add liquidity transaction', SarosAMMErrorCode.AddLiquidityFailed);
+  }
+
+  static RemoveLiquidityFailed(): SarosAMMError {
+    return new SarosAMMError('Failed to build remove liquidity transaction', SarosAMMErrorCode.RemoveLiquidityFailed);
   }
 
   static QuoteCalculationFailed(): SarosAMMError {
