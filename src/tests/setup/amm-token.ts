@@ -2,7 +2,7 @@ import { createMint, getOrCreateAssociatedTokenAccount, mintTo } from '@solana/s
 import { Connection, Keypair, PublicKey, sendAndConfirmTransaction } from '@solana/web3.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import { SarosAMMPair } from '../../services/pair';
+import { SarosAMM } from '../../services';
 import { MODE } from '../../constants/config';
 import { SwapCurveType } from '../../types';
 // import { waitForConfirmation } from './test-util';
@@ -79,10 +79,9 @@ export async function ensureAMMTokenAndPool(
 
   // Create new pool
   console.log('Creating AMM pair...');
-  const ammPair = new SarosAMMPair({ mode: MODE.DEVNET, connection }, PublicKey.default);
-  const result = await ammPair.createPair({
+  const amm = new SarosAMM({ mode: MODE.DEVNET, connection });
+  const result = await amm.createPair({
     payer: payer.publicKey,
-    feeOwner: payer.publicKey,
     tokenAMint: tokenAMint,
     tokenBMint: tokenBMint,
     initialTokenAAmount: 100_000n * 10n ** 9n, // 100,000 tokens

@@ -3,6 +3,7 @@ import { SarosBaseService, type SarosAMMConfig } from './base';
 import { SarosAMMPair } from './pair';
 import type { CreatePairParams, CreatePairResult } from '../types';
 import { SWAP_ACCOUNT_SIZE } from '../constants/config';
+import { buildCreatePairTransaction } from './createPair';
 
 const TOKEN_A_MINT_OFFSET = 131;
 const TOKEN_B_MINT_OFFSET = TOKEN_A_MINT_OFFSET + 32;
@@ -22,8 +23,11 @@ export class SarosAMM extends SarosBaseService {
    * metadata but does not submit anything to the cluster.
    */
   public createPair(params: CreatePairParams): Promise<CreatePairResult> {
-    const pair = new SarosAMMPair(this.config, PublicKey.default);
-    return pair.createPair(params);
+    return buildCreatePairTransaction({
+      connection: this.connection,
+      ammProgram: this.ammProgram,
+      params,
+    });
   }
 
   /**

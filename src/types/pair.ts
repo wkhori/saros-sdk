@@ -77,8 +77,8 @@ export interface FeeMetadata {
 export interface CreatePairParams {
   /** Payer and initial liquidity provider */
   payer: PublicKey;
-  /** Fee recipient address */
-  feeOwner: PublicKey;
+  /** Fee recipient address (defaults to Saros fee owner) */
+  feeOwner?: PublicKey;
   /** Token A mint address */
   tokenAMint: PublicKey;
   /** Token B mint address */

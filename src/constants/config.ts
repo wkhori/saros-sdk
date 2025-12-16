@@ -11,6 +11,11 @@ export enum MODE {
 }
 
 /**
+ * Saros fee owner (legacy token-swap pools).
+ */
+export const SAROS_FEE_OWNER = new PublicKey('FDbLZ5DRo61queVRH9LL1mQnsiAoubQEnoCRuPEmH9M8');
+
+/**
  * AMM Program IDs across networks
  * Note: Devnet version does not include latest pool metadata features.
  */
@@ -56,5 +61,6 @@ export const CURVE_TYPE_MAP: Record<SwapCurveType, any> = {
   [SwapCurveType.Stable]: { stable: {} },
   [SwapCurveType.Offset]: { offset: {} },
 };
+
 // Default swap calculator (32 bytes of zero)
 export const DEFAULT_SWAP_CALCULATOR = Array.from(new Uint8Array(32));
