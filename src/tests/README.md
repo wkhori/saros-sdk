@@ -15,6 +15,7 @@ pnpm test src/tests/integration/pair.flow.test.ts
 
 ## Setup / Environment
 
+- Node.js `>=18.12` is required to run the repo tests with `pnpm`.
 - Tests load RPC URLs from `.env.test` via `vitest.config.ts`.
   - `DEVNET_RPC_URL` is used by the AMM integration tests.
   - `RPC_URL` is used by any mainnet-facing code paths (not required by the AMM integration tests).
@@ -37,4 +38,5 @@ To force a fresh environment, delete `test-data/test-wallet.json` and/or `test-d
 ## Notes
 
 - Integration tests submit real transactions to devnet and will consume some SOL for fees/rent (rent is largely reclaimable, but not guaranteed if a test is interrupted).
+- If your RPC is rate limited, set `DEVNET_RPC_URL` in `.env.test`
 - If you hit RPC rate limits (429) or a transient setup failure, run `pnpm test src/tests/integration/pair.test.ts` once first to create/cache the test mints + pool in `test-data/amm-test-tokens.json`, then rerun your full test command.
