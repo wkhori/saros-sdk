@@ -44,8 +44,6 @@ export interface SwapParams {
   userTokenX?: PublicKey;
   /** Optional: user's token Y account */
   userTokenY?: PublicKey;
-  /** Optional: host fee account for routing fees */
-  hostFeeAccount?: PublicKey;
   /** Optional: transaction to add instructions to */
   transaction?: Transaction;
 }

@@ -20,8 +20,8 @@ export class SarosAMM extends SarosBaseService {
   }
 
   /**
-   * Create a new Saros AMM pool. 
-   * Returns the transaction and helper metadata for signing and sending.
+   * Create a new Saros AMM pair.
+   * Returns an unsigned transaction plus helper metadata for signing and sending.
    */
   public async createPair(params: CreatePairParams): Promise<CreatePairResult> {
     try {
@@ -36,7 +36,7 @@ export class SarosAMM extends SarosBaseService {
   }
 
   /**
-   * Instantiate a SarosAMMPair for the provided pool address.
+   * Instantiate a SarosAMMPair for the provided pair address.
    */
   public async getPair(pairAddress: PublicKey): Promise<SarosAMMPair> {
     const pair = new SarosAMMPair(this.config, pairAddress);
@@ -45,14 +45,14 @@ export class SarosAMM extends SarosBaseService {
   }
 
   /**
-   * Batch helper for fetching multiple pools in parallel.
+   * Batch helper for fetching multiple pairs in parallel.
    */
   public async getPairs(pairAddresses: PublicKey[]): Promise<SarosAMMPair[]> {
     return Promise.all(pairAddresses.map((address) => this.getPair(address)));
   }
 
   /**
-   * Discover every Saros AMM pool on the configured cluster.
+   * Discover every Saros AMM pair on the configured cluster.
    */
   public async getAllPairAddresses(): Promise<string[]> {
     const accounts = await this.connection.getProgramAccounts(this.getDexProgramId(), {
@@ -62,8 +62,8 @@ export class SarosAMM extends SarosBaseService {
   }
 
   /**
-   * Find pools that contain a token mint. Optionally restrict the search to a
-   * specific pair by supplying mintB.
+   * Find pairs that contain a token mint. Optionally restrict the search to a
+   * specific pair by supplying `mintB`.
    */
   public async findPairs(mintA: PublicKey, mintB?: PublicKey): Promise<string[]> {
     const programId = this.getDexProgramId();

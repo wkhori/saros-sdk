@@ -89,8 +89,6 @@ export interface CreatePairParams {
   initialTokenBAmount: bigint;
   /** Swap curve type (ConstantProduct, Stable, etc.) */
   curveType: SwapCurveType;
-  /** Optional curve parameters (32 bytes) */
-  curveParameters?: Buffer;
 }
 
 /**

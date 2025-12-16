@@ -38,5 +38,5 @@ To force a fresh environment, delete `test-data/test-wallet.json` and/or `test-d
 ## Notes
 
 - Integration tests submit real transactions to devnet and will consume some SOL for fees/rent (rent is largely reclaimable, but not guaranteed if a test is interrupted).
-- If your RPC is rate limited, set `DEVNET_RPC_URL` in `.env.test`
-- If you hit RPC rate limits (429) or a transient setup failure, run `pnpm test src/tests/integration/pair.test.ts` once first to create/cache the test mints + pool in `test-data/amm-test-tokens.json`, then rerun your full test command.
+- If your RPC is rate limited, set `DEVNET_RPC_URL` in `.env.test` to a higher-throughput endpoint (or rerun with backoff).
+- Recommended: run `pnpm test src/tests/integration/pair.test.ts` once first to create/cache the test mints + pool in `test-data/amm-test-tokens.json`, then run your full test command. This avoids multiple integration files racing to create the same devnet setup.

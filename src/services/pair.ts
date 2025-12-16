@@ -136,22 +136,6 @@ export class SarosAMMPair extends SarosBaseService {
 
   /**
    * Execute a swap transaction
-   *
-   * @example
-   * // Always get a quote first
-   * const quote = await pair.getQuote({
-   *   amount: 1_000_000n,
-   *   swapForY: true,
-   *   slippage: 1
-   * });
-   *
-   * // Then execute swap with slippage protection
-   * const tx = await pair.swap({
-   *   payer: wallet.publicKey,
-   *   amount: 1_000_000n,
-   *   minAmountOut: quote.minAmountOut,
-   *   swapForY: true
-   * });
    */
   public async swap(params: SwapParams): Promise<Transaction> {
     try {
@@ -202,19 +186,6 @@ export class SarosAMMPair extends SarosBaseService {
    *
    * Calculates required token amounts based on current pool ratios and creates
    * a transaction to deposit tokens and mint LP tokens.
-   *
-   * @param params - Liquidity addition parameters
-   * @returns Transaction for user to sign and send
-   *
-   * @example
-   * const tx = await pair.addLiquidity({
-   *   payer: wallet.publicKey,
-   *   poolTokenAmount: 1_000_000_000n,
-   *   maximumTokenA: 10_000_000n,
-   *   maximumTokenB: 10_000_000n
-   * });
-   *
-   * const signature = await connection.sendTransaction(tx, [wallet]);
    */
   public async addLiquidity(params: AddLiquidityParams): Promise<Transaction> {
     try {
@@ -262,19 +233,6 @@ export class SarosAMMPair extends SarosBaseService {
    * Remove liquidity from a pool
    *
    * Burns LP tokens and withdraws proportional amounts of underlying tokens.
-   *
-   * @param params - Liquidity removal parameters
-   * @returns Transaction for user to sign and send
-   *
-   * @example
-   * const tx = await pair.removeLiquidity({
-   *   payer: wallet.publicKey,
-   *   poolTokenAmount: 1_000_000_000n,
-   *   minimumTokenA: 9_500_000n,
-   *   minimumTokenB: 9_500_000n
-   * });
-   *
-   * const signature = await connection.sendTransaction(tx, [wallet]);
    */
   public async removeLiquidity(params: RemoveLiquidityParams): Promise<Transaction> {
     try {
@@ -319,9 +277,6 @@ export class SarosAMMPair extends SarosBaseService {
     }
   }
 
-  // -----------------------------------------------------------------------------
-  // Private helpers
-  // -----------------------------------------------------------------------------
   private async buildPairMetadata(): Promise<PairMetadata> {
     const { tokenAMint, tokenBMint, tokenA, tokenB, poolMint, poolFeeAccount, fees, swapCurve } = this.pairAccount;
 

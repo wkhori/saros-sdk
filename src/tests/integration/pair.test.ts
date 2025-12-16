@@ -21,20 +21,23 @@ describe('AMM Pair Integration Tests', () => {
     connection = new Connection(RPC_ENDPOINT, 'confirmed');
     const wallet = await loadOrCreateWallet(connection);
 
-    console.log(`\nTest wallet: ${wallet.address}`);
-    console.log(`Balance: ${wallet.balance.toFixed(2)} SOL\n`);
+    console.log(`\nTest wallet: ${wallet.address}\nBalance: ${wallet.balance.toFixed(2)} SOL\n`);
 
     const result = await ensureAMMTokenAndPool(connection, wallet.keypair);
     tokenA = result.tokenA;
     tokenB = result.tokenB;
     pool = result.pool;
 
-    console.log(`\nAMM Pool created:`);
-    console.log(`  Pair address: ${pool.pair.toBase58()}`);
-    console.log(`  Token A: ${tokenA.symbol} (${tokenA.mint.toBase58()})`);
-    console.log(`  Token B: ${tokenB.symbol} (${tokenB.mint.toBase58()})`);
-    console.log(`  LP Mint: ${pool.lpMint.toBase58()}`);
-    console.log(`  Curve: ${pool.curveType}\n`);
+    console.log(
+      [
+        `\nAMM Pool created:`,
+        `  Pair address: ${pool.pair.toBase58()}`,
+        `  Token A: ${tokenA.symbol} (${tokenA.mint.toBase58()})`,
+        `  Token B: ${tokenB.symbol} (${tokenB.mint.toBase58()})`,
+        `  LP Mint: ${pool.lpMint.toBase58()}`,
+        `  Curve: ${pool.curveType}\n`,
+      ].join('\n')
+    );
 
     pair = new SarosAMMPair({ mode: MODE.DEVNET, connection }, pool.pair);
   }, 90000);
@@ -50,11 +53,15 @@ describe('AMM Pair Integration Tests', () => {
       expect(pairAccount.tokenBMint.toBase58()).toBe(tokenB.mint.toBase58());
       expect(pairAccount.poolMint.toBase58()).toBe(pool.lpMint.toBase58());
 
-      console.log(`\nPair account initialized:`);
-      console.log(`  Version: ${pairAccount.version}`);
-      console.log(`  Token A: ${pairAccount.tokenAMint.toBase58()}`);
-      console.log(`  Token B: ${pairAccount.tokenBMint.toBase58()}`);
-      console.log(`  LP Mint: ${pairAccount.poolMint.toBase58()}`);
+      console.log(
+        [
+          `\nPair account initialized:`,
+          `  Version: ${pairAccount.version}`,
+          `  Token A: ${pairAccount.tokenAMint.toBase58()}`,
+          `  Token B: ${pairAccount.tokenBMint.toBase58()}`,
+          `  LP Mint: ${pairAccount.poolMint.toBase58()}`,
+        ].join('\n')
+      );
     });
 
     it('should build pair metadata with reserves', async () => {
@@ -69,10 +76,14 @@ describe('AMM Pair Integration Tests', () => {
       expect(metadata.tokenX.reserve).toBeGreaterThan(0n);
       expect(metadata.tokenY.reserve).toBeGreaterThan(0n);
 
-      console.log(`\nPair metadata:`);
-      console.log(`  Token A reserve: ${metadata.tokenX.reserve?.toString()}`);
-      console.log(`  Token B reserve: ${metadata.tokenY.reserve?.toString()}`);
-      console.log(`  Fee: ${metadata.fees.tradeFee + metadata.fees.ownerTradeFee}%`);
+      console.log(
+        [
+          `\nPair metadata:`,
+          `  Token A reserve: ${metadata.tokenX.reserve?.toString()}`,
+          `  Token B reserve: ${metadata.tokenY.reserve?.toString()}`,
+          `  Fee: ${metadata.fees.tradeFee + metadata.fees.ownerTradeFee}%`,
+        ].join('\n')
+      );
     });
   });
 });

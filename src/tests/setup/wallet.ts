@@ -2,8 +2,7 @@ import { Connection, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// Duplicate file from DLMM SDK test suite
-// In the future, consider moving to a shared location
+// Adapted from the DLMM SDK test helpers; consider extracting shared test utilities later.
 
 export interface TestWallet {
   keypair: Keypair;

@@ -50,7 +50,7 @@ export async function ensureAMMTokenAndPool(
   connection: Connection,
   payer: Keypair
 ): Promise<{ tokenA: TestToken; tokenB: TestToken; pool: TestAMMPool }> {
-  // Prevent concurrent creation across multiple integration test files.
+  // Memoize within this process so multiple test files reuse the same setup.
   if (ensureInFlight) return ensureInFlight;
 
   ensureInFlight = (async () => {

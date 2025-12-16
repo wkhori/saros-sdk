@@ -16,38 +16,13 @@ import type { SarosAPIFarmInfo, SarosAPIStakeInfo } from '../types/api';
 import { SarosAMMConfig } from './base';
 
 /**
- * Pool type for API filtering only.
- * On-chain, both farm and stake use the same Pool account structure.
- * - 'farm': LP token staking pools (from /api/saros/information?type=farm)
- * - 'stake': Single token staking pools (from /api/saros/information?type=stake)
+ * Pool type for API filtering only (farm vs stake).
+ * On-chain, both use the same Pool account structure.
  */
 export type PoolType = 'farm' | 'stake';
 
 /**
  * Unified farming service for both LP token farming and single token staking
- *
- * @example
- * ```typescript
- * // Farm (LP tokens)
- * const farm = new SarosFarm(
- *   { mode: MODE.MAINNET, connection },
- *   farmPoolAddress,
- *   'farm'
- * );
- *
- * // Stake (single tokens)
- * const stake = new SarosFarm(
- *   { mode: MODE.MAINNET, connection },
- *   stakePoolAddress,
- *   'stake'
- * );
- *
- * await farm.refreshState();
- * const stakeTx = await farm.stake({
- *   payer: wallet.publicKey,
- *   amount: 1_000_000n
- * });
- * ```
  */
 export class SarosFarm {
   private config: SarosAMMConfig;
