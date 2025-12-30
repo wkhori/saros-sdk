@@ -5,15 +5,15 @@ The engine that powers Saros AMM pools on Solana.
 ## Installation
 
 ```bash
-pnpm add @saros-finance/amm-sdk
+pnpm add @saros-finance/saros-sdk
 ```
 
 ```bash
-yarn add @saros-finance/amm-sdk
+yarn add @saros-finance/saros-sdk
 ```
 
 ```bash
-npm install @saros-finance/amm-sdk
+npm install @saros-finance/saros-sdk
 ```
 
 ### Core Components
@@ -28,7 +28,7 @@ npm install @saros-finance/amm-sdk
 
 ```typescript
 import { Connection } from '@solana/web3.js';
-import { SarosAMM, MODE } from '@saros-finance/amm-sdk';
+import { SarosAMM, MODE } from '@saros-finance/saros-sdk';
 
 const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
 
@@ -66,7 +66,7 @@ console.log({
 
 ```typescript
 import { PublicKey } from '@solana/web3.js';
-import { SwapCurveType } from '@saros-finance/amm-sdk';
+import { SwapCurveType } from '@saros-finance/saros-sdk';
 
 const { transaction, pairAddress, lpTokenMint, signers } = await sdk.createPair({
   payer: wallet.publicKey,
@@ -172,7 +172,7 @@ const pairs = await sdk.getPairs([new PublicKey('PAIR_1'), new PublicKey('PAIR_2
 
 ```typescript
 import { PublicKey } from '@solana/web3.js';
-import { SarosFarm } from '@saros-finance/amm-sdk';
+import { SarosFarm } from '@saros-finance/saros-sdk';
 
 const farm = new SarosFarm({ mode: MODE.MAINNET, connection }, new PublicKey('FARM_POOL_ADDRESS'), 'farm');
 await farm.refreshState();
