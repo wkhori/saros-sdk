@@ -17,8 +17,8 @@
     "build": "tsup",
     "start": "tsup --watch",
     "prepare": "pnpm run build",
-    "lint": "eslint . --ext .js,.ts --fix",
-    "lint:check": "eslint . --ext .js,.ts",
+    "lint": "eslint . --ext .ts --fix",
+    "lint:check": "eslint . --ext .ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "fix": "prettier --write . && eslint . --ext .ts --fix",
@@ -38,18 +38,13 @@
     "stake",
     "finance"
   ],
-  "peerDependencies": {
-    "@coral-xyz/anchor": "^0.30.0 || ^0.31.0",
-    "@solana/spl-token": "^0.4.0",
-    "@solana/web3.js": "^1.95.0"
-  },
   "dependencies": {
-    "bn.js": "^5.2.2"
-  },
-  "devDependencies": {
     "@coral-xyz/anchor": "0.31.1",
     "@solana/spl-token": "0.4.13",
     "@solana/web3.js": "1.98.4",
+    "bn.js": "^5.2.2"
+  },
+  "devDependencies": {
     "@types/node": "^22.18.3",
     "@typescript-eslint/eslint-plugin": "^8.44.0",
     "@typescript-eslint/parser": "^8.44.0",
