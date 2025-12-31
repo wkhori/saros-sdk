@@ -78,4 +78,3 @@ export interface SarosAPIStakeInfo {
   startBlock: number;
   endBlock: number;
 }
-
