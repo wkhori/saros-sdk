@@ -14,7 +14,7 @@
     }
   },
   "scripts": {
-    "build": "tsup && tsc -p tsconfig.build.json",
+    "build": "tsup",
     "start": "tsup --watch",
     "prepare": "pnpm run build",
     "lint": "eslint . --ext .js,.ts --fix",
