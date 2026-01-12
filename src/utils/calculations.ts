@@ -1,3 +1,5 @@
+import { SarosAMMError } from './errors';
+
 /**
  * Calculate output amount for a constant product AMM swap
  * Formula: amountOut = (reserveOut * amountIn * feeMultiplier) / (reserveIn + amountIn * feeMultiplier)
@@ -48,4 +50,24 @@ export function calculatePriceImpact(
 export function getMinOutputWithSlippage(amount: bigint, slippagePercent: number): bigint {
   const slippageBps = BigInt(Math.floor(slippagePercent * 100));
   return (amount * (10000n - slippageBps)) / 10000n;
+}
+
+/**
+ * Calculate token amounts required for a given LP token amount
+ */
+export function calculateTokensForLp(
+  lpTokenAmount: bigint,
+  reserveA: bigint,
+  reserveB: bigint,
+  lpSupply: bigint
+): { tokenAAmount: bigint; tokenBAmount: bigint } {
+  if (lpSupply === 0n || reserveA === 0n || reserveB === 0n) {
+    throw SarosAMMError.InsufficientLiquidity();
+  }
+
+  // Round up to ensure sufficient deposit for minting
+  const tokenAAmount = (lpTokenAmount * reserveA + (lpSupply - 1n)) / lpSupply;
+  const tokenBAmount = (lpTokenAmount * reserveB + (lpSupply - 1n)) / lpSupply;
+
+  return { tokenAAmount, tokenBAmount };
 }

@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { calculateSwapOutput, calculatePriceImpact, getMinOutputWithSlippage } from '../../utils/calculations';
+import {
+  calculateSwapOutput,
+  calculatePriceImpact,
+  getMinOutputWithSlippage,
+  calculateTokensForLp,
+} from '../../utils/calculations';
 
 describe('Calculation Utilities', () => {
   describe('calculateSwapOutput', () => {
@@ -87,6 +92,42 @@ describe('Calculation Utilities', () => {
       const minOutput = getMinOutputWithSlippage(amount, 0.5);
 
       expect(minOutput).toBe(995_000n);
+    });
+  });
+
+  describe('calculateTokensForLp', () => {
+    it('should calculate token amounts for LP tokens', () => {
+      const lpTokenAmount = 100n;
+      const reserveA = 1_000_000n;
+      const reserveB = 500_000n;
+      const lpSupply = 1000n;
+
+      const { tokenAAmount, tokenBAmount } = calculateTokensForLp(lpTokenAmount, reserveA, reserveB, lpSupply);
+
+      expect(tokenAAmount).toBe(100_000n);
+      expect(tokenBAmount).toBe(50_000n);
+    });
+
+    it('should round up token amounts', () => {
+      const lpTokenAmount = 1n;
+      const reserveA = 1000n;
+      const reserveB = 1000n;
+      const lpSupply = 3n;
+
+      const { tokenAAmount, tokenBAmount } = calculateTokensForLp(lpTokenAmount, reserveA, reserveB, lpSupply);
+
+      // 1 * 1000 / 3 = 333.33... should round up to 334
+      expect(tokenAAmount).toBe(334n);
+      expect(tokenBAmount).toBe(334n);
+    });
+
+    it('should throw on zero reserves', () => {
+      expect(() => calculateTokensForLp(100n, 0n, 500_000n, 1000n)).toThrow();
+      expect(() => calculateTokensForLp(100n, 1_000_000n, 0n, 1000n)).toThrow();
+    });
+
+    it('should throw on zero LP supply', () => {
+      expect(() => calculateTokensForLp(100n, 1_000_000n, 500_000n, 0n)).toThrow();
     });
   });
 });

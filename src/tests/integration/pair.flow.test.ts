@@ -6,6 +6,7 @@ import { MODE } from '../../constants/config';
 import { loadOrCreateWallet } from '../setup/wallet';
 import { ensureAMMTokenAndPool } from '../setup/amm-token';
 import { getTokenBalance } from '../setup/test-util';
+import { calculateTokensForLp } from '../../utils/calculations';
 
 const RPC_ENDPOINT = process.env.DEVNET_RPC_URL || 'https://api.devnet.solana.com';
 
@@ -45,15 +46,19 @@ describe('AMM Pair Full Flow (Devnet)', () => {
     // Add liquidity by requesting a small number of LP base units (LP decimals = 2).
     const lpToMint = 100n; // 1.00 LP
 
-    // Approx required amounts from current ratio: required = ceil(lpToMint * reserve / lpSupply)
-    const reqA = (lpToMint * reserveABefore + (lpSupplyBefore - 1n)) / lpSupplyBefore;
-    const reqB = (lpToMint * reserveBBefore + (lpSupplyBefore - 1n)) / lpSupplyBefore;
+    // Calculate required token amounts
+    const { tokenAAmount, tokenBAmount } = calculateTokensForLp(
+      lpToMint,
+      reserveABefore,
+      reserveBBefore,
+      lpSupplyBefore
+    );
 
     const addTx = await pair.addLiquidity({
       payer,
       poolTokenAmount: lpToMint,
-      maximumTokenA: reqA + 1n,
-      maximumTokenB: reqB + 1n,
+      maximumTokenA: tokenAAmount + 1n,
+      maximumTokenB: tokenBAmount + 1n,
     });
 
     await sendAndConfirmTransaction(connection, addTx, [payerKeypair]);

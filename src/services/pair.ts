@@ -67,7 +67,7 @@ export class SarosAMMPair extends SarosBaseService {
         throw SarosAMMError.PairFetchFailed();
       }
 
-      // Use legacy decoder since Saros AMM doesn't use discriminators
+      // Use legacy decoder. Saros AMM doesn't use discriminators
       this.pairAccount = decodePairAccount(accountInfo.data);
 
       // Derive pool authority
